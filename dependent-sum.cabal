@@ -10,14 +10,14 @@ maintainer:             James Cook <mokus@deepbondi.net>
 license:                PublicDomain
 homepage:               /dev/null
 
-source-repository head
-  type:     darcs
-  location: http://code.haskell.org/~mokus/dependent-sum
-
 category:               Data, Dependent Types
 synopsis:               Dependent sum type
 description:            Dependent sums and supporting typeclasses for
                         comparing and formatting them.
+
+source-repository head
+  type:     darcs
+  location: http://code.haskell.org/~mokus/dependent-sum
 
 Library
   hs-source-dirs:       src
