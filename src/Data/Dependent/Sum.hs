@@ -18,7 +18,7 @@ import Data.Maybe (fromMaybe)
 -- > AString :=> "hello!"
 -- > AnInt   :=> 42
 -- 
--- And we can right functions that consume @DSum Tag@ by matching, such as:
+-- And we can write functions that consume @DSum Tag@ by matching, such as:
 -- 
 -- > toString :: DSum Tag -> String
 -- > toString (AString :=> str) = str
@@ -29,9 +29,9 @@ import Data.Maybe (fromMaybe)
 -- dependent sums.  The :=> operator has very low precedence and binds to 
 -- the right, so if the @Tag@ GADT is extended with an additional constructor
 -- @Rec :: Tag (DSum Tag)@, then @Rec :=> AnInt :=> 3 + 4@ is parsed as
--- would be expected and has type @DSum Tag@.  Its precedence is just above
--- that of '$', so @foo bar $ AString :=> "eep"@ is equivalent to
--- @foo bar (AString :=> "eep")@.
+-- would be expected (@Rec :=> (AnInt :=> (3 + 4))@) and has type @DSum Tag@.
+-- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
+-- is equivalent to @foo bar (AString :=> "eep")@.
 data DSum tag = forall a. tag a :=> a
 infixr 1 :=>
 
@@ -59,20 +59,23 @@ instance ShowTag tag => Show (DSum tag) where
         . showTaggedPrec tag 1 value
         )
 
--- |In order to test @DSum tag@ for equality, 'tag' must know how to test
+-- |In order to test @DSum tag@ for equality, @tag@ must know how to test
 -- both itself and its tagged values for equality.  'GCompare' and 'EqTag'
 -- together provide the interface by which they are expected to do so.
 -- 
 -- Continuing the @Tag@ example from the 'DSum' section, we can define:
 -- 
--- instance GCompare Tag where
---     gcompare AString AString = GEQ
---     gcompare AString AnInt   = GLT
---     gcompare AnInt   AString = GGT
---     gcompare AnInt   AnInt   = GEQ
--- instance EqTag Tag where
---     eqTagged AString AString = (==)
---     eqTagged AnInt   AnInt   = (==)
+-- > instance GCompare Tag where
+-- >     gcompare AString AString = GEQ
+-- >     gcompare AString AnInt   = GLT
+-- >     gcompare AnInt   AString = GGT
+-- >     gcompare AnInt   AnInt   = GEQ
+-- > instance EqTag Tag where
+-- >     eqTagged AString AString = (==)
+-- >     eqTagged AnInt   AnInt   = (==)
+-- 
+-- Note that 'eqTagged' is not called until after the tags have been
+-- compared, so it only needs to consider the cases where 'gcompare' returns 'GEQ'.
 class GCompare tag => EqTag tag where
     eqTagged :: tag a -> tag a -> a -> a -> Bool
 
@@ -81,20 +84,20 @@ instance EqTag tag => Eq (DSum tag) where
         GEQ <- geq t1 t2
         return (eqTagged t1 t2 x1 x2)
 
--- |In order to compare @DSum tag@ values, 'tag' must know how to compare
+-- |In order to compare @DSum tag@ values, @tag@ must know how to compare
 -- both itself and its tagged values.  'GCompare', 'EqTag' and 'OrdTag'
 -- together provide the interface by which they are expected to do so.
 -- 
 -- Continuing the @Tag@ example from the 'EqTag' section, we can define:
 -- 
--- instance OrdTag Tag where
---     ordTagged AString AString = compare
---     ordTagged AnInt   AnInt   = compare
+-- > instance OrdTag Tag where
+-- >     compareTagged AString AString = compare
+-- >     compareTagged AnInt   AnInt   = compare
 class EqTag tag => OrdTag tag where
-    ordTagged :: tag a -> tag a -> a -> a -> Ordering
+    compareTagged :: tag a -> tag a -> a -> a -> Ordering
 
 instance OrdTag tag => Ord (DSum tag) where
     compare (t1 :=> x1) (t2 :=> x2)  = case gcompare t1 t2 of
         GLT -> LT
         GGT -> GT
-        GEQ -> ordTagged t1 t2 x1 x2
+        GEQ -> compareTagged t1 t2 x1 x2
