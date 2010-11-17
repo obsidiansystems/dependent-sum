@@ -32,7 +32,7 @@ import Data.Maybe (fromMaybe)
 -- would be expected (@Rec :=> (AnInt :=> (3 + 4))@) and has type @DSum Tag@.
 -- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
 -- is equivalent to @foo bar (AString :=> "eep")@.
-data DSum tag = forall a. tag a :=> a
+data DSum tag = forall a. !(tag a) :=> a
 infixr 1 :=>
 
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
