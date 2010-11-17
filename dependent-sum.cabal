@@ -1,0 +1,27 @@
+name:                   dependent-sum
+version:                0.0.0.1
+stability:              experimental
+
+cabal-version:          >= 1.2
+build-type:             Simple
+
+author:                 James Cook <your email here>
+maintainer:             James Cook <your email here>
+license:                Unspecified
+homepage:               /dev/null
+
+category:               Data, Dependent Types
+synopsis:               Dependent sums and ad-hoc GADT tags
+description:            Dependent sums and ad-hoc GADT tags.  Introduces some
+                        typeclasses for comparing and showing GADT's that
+                        really ought to be split into a more general-purpose 
+                        package, so they probably eventually will be.  Other
+                        than that, I think the interface is pretty stable.
+
+Library
+  hs-source-dirs:       src
+  exposed-modules:      Data.Dependent.Sum
+                        Data.GADT.Compare
+                        Data.GADT.Show
+                        Data.GADT.Tag
+  build-depends:        base >= 3 && <5, prim-uniq, primitive
