@@ -50,6 +50,8 @@ infixr 1 :=>
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
 class GShow tag => ShowTag tag where
+    -- |Given a value of type @tag a@, return the 'showsPrec' function for 
+    -- the type parameter @a@.
     showTaggedPrec :: tag a -> Int ->     a -> ShowS
 
 instance ShowTag tag => Show (DSum tag) where
@@ -77,6 +79,8 @@ instance ShowTag tag => Show (DSum tag) where
 -- Note that 'eqTagged' is not called until after the tags have been
 -- compared, so it only needs to consider the cases where 'gcompare' returns 'GEQ'.
 class GCompare tag => EqTag tag where
+    -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
+    -- return the '==' function for the type @a@.
     eqTagged :: tag a -> tag a -> a -> a -> Bool
 
 instance EqTag tag => Eq (DSum tag) where
@@ -93,7 +97,12 @@ instance EqTag tag => Eq (DSum tag) where
 -- > instance OrdTag Tag where
 -- >     compareTagged AString AString = compare
 -- >     compareTagged AnInt   AnInt   = compare
+-- 
+-- As with 'eqTagged', 'compareTagged' only needs to consider cases where
+-- 'gcompare' returns 'GEQ'.
 class EqTag tag => OrdTag tag where
+    -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
+    -- return the 'compare' function for the type @a@.
     compareTagged :: tag a -> tag a -> a -> a -> Ordering
 
 instance OrdTag tag => Ord (DSum tag) where

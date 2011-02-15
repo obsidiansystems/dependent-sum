@@ -12,7 +12,7 @@ data GOrdering a b where
     GGT :: GOrdering a b
 
 -- |Type class for comparable GADT-like structures.  When 2 things are equal,
--- must return a witness that their parameter types are equal as well (GEQ).
+-- must return a witness that their parameter types are equal as well ('GEQ').
 class GCompare f where
     gcompare :: f a -> f b -> GOrdering a b
 
