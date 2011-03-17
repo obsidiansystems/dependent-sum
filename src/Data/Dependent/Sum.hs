@@ -39,6 +39,11 @@ infixr 1 :=>
 -- to show itself as well as any value of the tagged type.  'GShow' together
 -- with this class provides the interface by which it can do so.
 --
+-- @GShow tag => t@ is conceptually equivalent to something like this
+-- imaginary syntax:  @(forall a. Inhabited (tag a) => Show a) => t@,
+-- where 'Inhabited' is an imaginary predicate that characterizes 
+-- non-empty types, and 'a' does not occur free in 't'.
+--
 -- The @Tag@ example type introduced in the 'DSum' section could be given the
 -- following instances:
 -- 
@@ -60,40 +65,45 @@ instance ShowTag tag => Show (DSum tag) where
         )
 
 -- |In order to test @DSum tag@ for equality, @tag@ must know how to test
--- both itself and its tagged values for equality.  'GCompare' and 'EqTag'
--- together provide the interface by which they are expected to do so.
+-- both itself and its tagged values for equality.  'EqTag' defines
+-- the interface by which they are expected to do so.
 -- 
 -- Continuing the @Tag@ example from the 'DSum' section, we can define:
 -- 
--- > instance GCompare Tag where
--- >     gcompare AString AString = GEQ
--- >     gcompare AString AnInt   = GLT
--- >     gcompare AnInt   AString = GGT
--- >     gcompare AnInt   AnInt   = GEQ
+-- > instance GEq Tag where
+-- >     geq AString AString = Just Refl
+-- >     geq AString AnInt   = Nothing
+-- >     geq AnInt   AString = Nothing
+-- >     geq AnInt   AnInt   = Just Refl
 -- > instance EqTag Tag where
 -- >     eqTagged AString AString = (==)
 -- >     eqTagged AnInt   AnInt   = (==)
 -- 
 -- Note that 'eqTagged' is not called until after the tags have been
 -- compared, so it only needs to consider the cases where 'gcompare' returns 'GEQ'.
-class GCompare tag => EqTag tag where
+class GEq tag => EqTag tag where
     eqTagged :: tag a -> tag a -> a -> a -> Bool
 
 instance EqTag tag => Eq (DSum tag) where
     (t1 :=> x1) == (t2 :=> x2)  = fromMaybe False $ do
-        GEQ <- geq t1 t2
+        Refl <- geq t1 t2
         return (eqTagged t1 t2 x1 x2)
 
 -- |In order to compare @DSum tag@ values, @tag@ must know how to compare
--- both itself and its tagged values.  'GCompare', 'EqTag' and 'OrdTag'
--- together provide the interface by which they are expected to do so.
+-- both itself and its tagged values.  'OrdTag' defines the 
+-- interface by which they are expected to do so.
 -- 
 -- Continuing the @Tag@ example from the 'EqTag' section, we can define:
 -- 
+-- > instance GCompare Tag where
+-- >     gcompare AString AString = GEQ
+-- >     gcompare AString AnInt   = GLT
+-- >     gcompare AnInt   AString = GGT
+-- >     gcompare AnInt   AnInt   = GEQ
 -- > instance OrdTag Tag where
 -- >     compareTagged AString AString = compare
 -- >     compareTagged AnInt   AnInt   = compare
-class EqTag tag => OrdTag tag where
+class (EqTag tag, GCompare tag) => OrdTag tag where
     compareTagged :: tag a -> tag a -> a -> a -> Ordering
 
 instance OrdTag tag => Ord (DSum tag) where
