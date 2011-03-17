@@ -61,7 +61,7 @@ class GShow tag => ShowTag tag where
 
 instance ShowTag tag => Show (DSum tag) where
     showsPrec p (tag :=> value) = showParen (p >= 10)
-        ( gshowsPrec (showTaggedPrec tag) 0 tag
+        ( gshowsPrec 0 tag
         . showString " :=> "
         . showTaggedPrec tag 1 value
         )
