@@ -66,6 +66,21 @@ instance ShowTag tag => Show (DSum tag) where
         . showTaggedPrec tag 1 value
         )
 
+class GRead tag => ReadTag tag where
+    readTaggedPrec :: tag a -> Int -> ReadS a
+
+instance ReadTag tag => Read (DSum tag) where
+    readsPrec p = readParen (p > 1) $ \s -> 
+        concat
+            [ withTag $ \tag ->
+                [ (tag :=> val, rest'')
+                | (val, rest'') <- readTaggedPrec tag 1 rest'
+                ]
+            | (withTag, rest) <- greadsPrec p s
+            , let (con, rest') = splitAt 5 rest
+            , con == " :=> "
+            ]
+
 -- |In order to test @DSum tag@ for equality, @tag@ must know how to test
 -- both itself and its tagged values for equality.  'EqTag' defines
 -- the interface by which they are expected to do so.

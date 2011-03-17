@@ -35,17 +35,17 @@ class GEq f where
     --
     -- (Making use of the 'DSum' type from "Data.Dependent.Sum" in both examples)
     geq :: f a -> f b -> Maybe (a := b)
-    geq = maybeEq (Just Refl) Nothing
+    geq x y = maybeEq x y (Just Refl) Nothing
     
-    -- An interesting alternative formulation:
+    -- |An interesting alternative formulation:
     -- This one is nice because it's purely type-level, which means
     -- that in some cases the type checker can statically prove
     -- that the 'f' case is unreachable.
     -- 
     -- Sometimes, though, it can be hard to get the 'Refl' case's type to unify
     -- with the assumptions properly.
-    maybeEq :: ((a ~ b) => c) -> c -> f a -> f b -> c
-    maybeEq f z x y = case geq x y of
+    maybeEq :: f a -> f b -> ((a ~ b) => c) -> c -> c
+    maybeEq x y f z = case geq x y of
         Just Refl   -> f
         Nothing     -> z
 
