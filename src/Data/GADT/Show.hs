@@ -5,6 +5,8 @@ module Data.GADT.Show where
 -- type or should be expected to know how to do so already.  For now, one will
 -- be provided.
 class GShow t where
+    -- |Given the 'showsPrec' function of the type parameter @a@, return a
+    -- 'showsPrec' function for the type @t a@.
     gshowsPrec :: (Int -> a -> ShowS) -> Int -> t a -> ShowS
 
 

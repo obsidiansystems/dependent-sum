@@ -112,6 +112,8 @@ instance Show (GOrdering a b) where
 
 -- |Type class for orderable GADT-like structures.  When 2 things are equal,
 -- must return a witness that their parameter types are equal as well (GEQ).
+-- |Type class for comparable GADT-like structures.  When 2 things are equal,
+-- must return a witness that their parameter types are equal as well ('GEQ').
 class GEq f => GCompare f where
     gcompare :: f a -> f b -> GOrdering a b
 
