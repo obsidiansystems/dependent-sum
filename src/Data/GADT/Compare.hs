@@ -1,8 +1,13 @@
-{-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies #-}
+{-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies, FlexibleInstances #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Data.GADT.Compare where
+
+import Data.GADT.Show
+import Data.Typeable
 
 data a := b where
     Refl :: a := a
+    deriving Typeable
 
 instance Eq (a := b) where
     Refl == Refl = True
@@ -12,6 +17,20 @@ instance Ord (a := b) where
 
 instance Show (a := b) where
     showsPrec _ Refl = showString "Refl"
+
+instance GShow ((:=) a) where
+    gshowsPrec _ Refl = showString "Refl"
+
+instance Read (a := a) where
+    readsPrec _ s = case con of
+        "Refl"  -> [(Refl, rest)]
+        _       -> []
+        where (con,rest) = splitAt 4 s
+
+instance GRead ((:=) a) where
+    greadsPrec p s = do
+        (Refl, rest) <- readsPrec p s :: [(x := x, String)]
+        return (\x -> x Refl, rest)
 
 -- |A class for type-contexts which contain enough information
 -- to (at least in some cases) decide the equality of types 
@@ -52,10 +71,6 @@ class GEq f where
 instance GEq ((:=) a) where
     geq Refl Refl = Just Refl
 
-instance GEq (GOrdering a) where
-    geq GEQ GEQ = Just Refl
-    geq   _   _ = Nothing
-
 -- This instance seems nice, but it's simply not right:
 -- 
 -- > instance GEq StableName where
@@ -89,6 +104,7 @@ data GOrdering a b where
     GLT :: GOrdering a b
     GEQ :: GOrdering t t
     GGT :: GOrdering a b
+    deriving Typeable
 
 -- |TODO: Think of a better name
 --
@@ -109,6 +125,17 @@ instance Show (GOrdering a b) where
     showsPrec _ GGT = showString "GGT"
     showsPrec _ GEQ = showString "GEQ"
     showsPrec _ GLT = showString "GLT"
+
+instance GShow (GOrdering a) where
+    gshowsPrec = showsPrec
+
+instance GRead (GOrdering a) where
+    greadsPrec _ s = case con of
+        "GGT"   -> [(\x -> x GGT, rest)]
+        "GEQ"   -> [(\x -> x GEQ, rest)]
+        "GLT"   -> [(\x -> x GLT, rest)]
+        _       -> []
+        where (con, rest) = splitAt 3 s
 
 -- |Type class for orderable GADT-like structures.  When 2 things are equal,
 -- must return a witness that their parameter types are equal as well (GEQ).

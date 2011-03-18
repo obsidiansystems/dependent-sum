@@ -24,4 +24,4 @@ gread :: GRead t => String -> (forall a. t a -> b) -> b
 gread s = hd [f | (f, "") <- greads s]
     where
         hd (x:_) = x
-        hd _ = error "gread: No parse"
+        hd _ = error "gread: no parse"

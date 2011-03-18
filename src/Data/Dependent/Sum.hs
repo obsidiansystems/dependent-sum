@@ -3,6 +3,7 @@ module Data.Dependent.Sum where
 
 import Data.GADT.Show
 import Data.GADT.Compare
+import Data.Typeable
 
 import Data.Maybe (fromMaybe)
 
@@ -35,6 +36,12 @@ import Data.Maybe (fromMaybe)
 data DSum tag = forall a. !(tag a) :=> a
 infixr 1 :=>
 
+instance Typeable1 t => Typeable (DSum t) where
+    typeOf ds = mkTyConApp dSumCon [typeOfT]
+        where
+            dSumCon = mkTyCon "Data.Dependent.Sum.DSum"
+            typeOfT = typeOf1 $ (undefined :: DSum f -> f a) ds
+
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
 -- to show itself as well as any value of the tagged type.  'GShow' together
 -- with this class provides the interface by which it can do so.
@@ -59,6 +66,16 @@ class GShow tag => ShowTag tag where
     -- the type parameter @a@.
     showTaggedPrec :: tag a -> Int ->     a -> ShowS
 
+instance Show a => ShowTag ((:=) a) where
+    showTaggedPrec Refl = showsPrec
+
+instance Show a => ShowTag (GOrdering a) where
+    showTaggedPrec GEQ = showsPrec
+    showTaggedPrec _   = \p _ -> showParen (p > 10)
+        ( showString "error "
+        . shows "type information lost into the mists of oblivion"
+        )
+
 instance ShowTag tag => Show (DSum tag) where
     showsPrec p (tag :=> value) = showParen (p >= 10)
         ( gshowsPrec 0 tag
@@ -68,6 +85,18 @@ instance ShowTag tag => Show (DSum tag) where
 
 class GRead tag => ReadTag tag where
     readTaggedPrec :: tag a -> Int -> ReadS a
+
+instance Read a => ReadTag ((:=) a) where
+    readTaggedPrec Refl = readsPrec
+
+instance Read a => ReadTag (GOrdering a) where
+    readTaggedPrec GEQ = readsPrec
+    readTaggedPrec tag = \p -> readParen (p>10) $ \s ->
+        [ (undefined, rest')
+        | let (con, rest) = splitAt 6 s
+        , con == "error "
+        , (_, rest') <- reads rest :: [(String, String)]
+        ]
 
 instance ReadTag tag => Read (DSum tag) where
     readsPrec p = readParen (p > 1) $ \s -> 
@@ -103,6 +132,9 @@ class GEq tag => EqTag tag where
     -- return the '==' function for the type @a@.
     eqTagged :: tag a -> tag a -> a -> a -> Bool
 
+instance Eq a => EqTag ((:=) a) where
+    eqTagged Refl Refl = (==)
+
 instance EqTag tag => Eq (DSum tag) where
     (t1 :=> x1) == (t2 :=> x2)  = fromMaybe False $ do
         Refl <- geq t1 t2
@@ -129,6 +161,9 @@ class (EqTag tag, GCompare tag) => OrdTag tag where
     -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
     -- return the 'compare' function for the type @a@.
     compareTagged :: tag a -> tag a -> a -> a -> Ordering
+
+instance Ord a => OrdTag ((:=) a) where
+    compareTagged Refl Refl = compare
 
 instance OrdTag tag => Ord (DSum tag) where
     compare (t1 :=> x1) (t2 :=> x2)  = case gcompare t1 t2 of
