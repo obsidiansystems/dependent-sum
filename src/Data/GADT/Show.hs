@@ -9,7 +9,7 @@ class GShow t where
 gshows :: GShow t => t a -> ShowS
 gshows = gshowsPrec (-1)
 
-gshow :: (GShow t, Show a) => t a -> String
+gshow :: (GShow t) => t a -> String
 gshow x = gshows x ""
 
 
