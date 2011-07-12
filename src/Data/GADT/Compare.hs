@@ -59,7 +59,11 @@ class GEq f where
     -- |An interesting alternative formulation:
     -- This one is nice because it's purely type-level, which means
     -- that in some cases the type checker can statically prove
-    -- that the 'f' case is unreachable.
+    -- that the 'f' case is unreachable.  In other cases, it can lead
+    -- to nice concise code such as:
+    -- 
+    -- > extract :: GEq tag => tag a -> DSum tag -> Maybe a
+    -- > extract t1 (t2 :=> x) = maybeEq t1 t2 (Just x) Nothing
     -- 
     -- Sometimes, though, it can be hard to get the 'Refl' case's type to unify
     -- with the assumptions properly.
@@ -67,6 +71,16 @@ class GEq f where
     maybeEq x y f z = case geq x y of
         Just Refl   -> f
         Nothing     -> z
+
+-- |If 'f' has a 'GEq' instance, this function makes a suitable default 
+-- implementation of '(==)'.
+defaultEq :: GEq f => f a -> f b -> Bool
+defaultEq x y = maybeEq x y True False
+
+-- |If 'f' has a 'GEq' instance, this function makes a suitable default 
+-- implementation of '(/=)'.
+defaultNeq :: GEq f => f a -> f b -> Bool
+defaultNeq x y = maybeEq x y False True
 
 instance GEq ((:=) a) where
     geq Refl Refl = Just Refl
