@@ -19,7 +19,8 @@ import Data.Maybe (fromMaybe)
 -- > AString :=> "hello!"
 -- > AnInt   :=> 42
 -- 
--- And we can write functions that consume @DSum Tag@ by matching, such as:
+-- And we can write functions that consume @DSum Tag@ values by matching, 
+-- such as:
 -- 
 -- > toString :: DSum Tag -> String
 -- > toString (AString :=> str) = str
@@ -69,6 +70,7 @@ class GShow tag => ShowTag tag where
 instance Show a => ShowTag ((:=) a) where
     showTaggedPrec Refl = showsPrec
 
+-- This instance is questionable.  It works, but is pretty useless.
 instance Show a => ShowTag (GOrdering a) where
     showTaggedPrec GEQ = showsPrec
     showTaggedPrec _   = \p _ -> showParen (p > 10)
@@ -89,14 +91,15 @@ class GRead tag => ReadTag tag where
 instance Read a => ReadTag ((:=) a) where
     readTaggedPrec Refl = readsPrec
 
-instance Read a => ReadTag (GOrdering a) where
-    readTaggedPrec GEQ = readsPrec
-    readTaggedPrec tag = \p -> readParen (p>10) $ \s ->
-        [ (undefined, rest')
-        | let (con, rest) = splitAt 6 s
-        , con == "error "
-        , (_, rest') <- reads rest :: [(String, String)]
-        ]
+-- This instance is questionable.  It works, but is partial (and is also pretty useless)
+-- instance Read a => ReadTag (GOrdering a) where
+--     readTaggedPrec GEQ = readsPrec
+--     readTaggedPrec tag = \p -> readParen (p>10) $ \s ->
+--         [ (error msg, rest')
+--         | let (con, rest) = splitAt 6 s
+--         , con == "error "
+--         , (msg, rest') <- reads rest :: [(String, String)]
+--         ]
 
 instance ReadTag tag => Read (DSum tag) where
     readsPrec p = readParen (p > 1) $ \s -> 
