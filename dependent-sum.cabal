@@ -8,16 +8,18 @@ build-type:             Simple
 author:                 James Cook <mokus@deepbondi.net>
 maintainer:             James Cook <mokus@deepbondi.net>
 license:                PublicDomain
-homepage:               /dev/null
+homepage:               https://github.com/mokus0/dependent-sum
 
 category:               Data, Dependent Types
 synopsis:               Dependent sum type
 description:            Dependent sums and supporting typeclasses for
                         comparing and formatting them.
 
+extra-source-files:     examples/*.hs
+
 source-repository head
-  type:     darcs
-  location: http://code.haskell.org/~mokus/dependent-sum
+  type:     git
+  location: git://github.com/mokus0/dependent-sum.git
 
 Library
   hs-source-dirs:       src
