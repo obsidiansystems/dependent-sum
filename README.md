@@ -33,4 +33,4 @@ There are similar classes for the `Prelude`'s `Eq`, `Ord` and `Read` classes.  T
     instance EqTag   tag => Eq   (DSum tag)
     instance OrdTag  tag => Ord  (DSum tag)
 
-For example implementations of these classes, see the generated Haddock docs or the code in the `examples` directory.  There is a fair amount of boilerplate.  It would be nice to implement some Template Haskell code to derive these classes (it would be just as straightforward as deriving the Prelude classes they wrap), but I haven't done so yet.
+For example implementations of these classes, see the generated Haddock docs or the code in the `examples` directory.  There is a fair amount of boilerplate.  It would be nice to implement some Template Haskell code to derive these classes (it would be just as straightforward as deriving the Prelude classes they support), but I haven't done so yet.
