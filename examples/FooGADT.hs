@@ -12,13 +12,12 @@ data Foo a where
     Qux :: Foo Double
 
 instance Eq (Foo a) where
-    Foo == Foo  = True
-    Bar == Bar  = True
-    Baz == Baz  = True
-    Qux == Qux  = True
-    _   == _    = False
+    (==) = defaultEq
 
 instance GEq Foo where
+    -- either 'geq' or 'maybeEq' are sufficient, but both
+    -- are given here for illustration of how to define them.
+    
     geq Foo Foo = Just Refl
     geq Bar Bar = Just Refl
     geq Baz Baz = Just Refl
@@ -42,19 +41,16 @@ instance EqTag Foo where
 instance GCompare Foo where
     gcompare Foo Foo = GEQ
     gcompare Foo _   = GLT
+    gcompare _   Foo = GGT
     
-    gcompare Bar Foo = GGT
     gcompare Bar Bar = GEQ
     gcompare Bar _   = GLT
+    gcompare _   Bar = GGT
     
-    gcompare Baz Foo = GGT
-    gcompare Baz Bar = GGT
     gcompare Baz Baz = GEQ
     gcompare Baz _   = GLT
+    gcompare _   Baz = GGT
     
-    gcompare Qux Foo = GGT
-    gcompare Qux Bar = GGT
-    gcompare Qux Baz = GGT
     gcompare Qux Qux = GEQ
 
 instance OrdTag Foo where
@@ -63,7 +59,7 @@ instance OrdTag Foo where
     compareTagged Baz Baz = compare
     compareTagged Qux Qux = compare
     
-    compareTagged _   _   = error "OrdTag: bad case"
+    compareTagged _   _   = error "OrdTag (Foo): bad case"
 
 instance Show (Foo a) where
     showsPrec _ Foo      = showString "Foo"
