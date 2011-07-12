@@ -5,7 +5,9 @@ module Data.GADT.Compare where
 import Data.GADT.Show
 import Data.Typeable
 
+-- |A GADT witnessing equality of two types.  Its only inhabitant is 'Refl'.
 data a := b where
+    -- |A value witnessing the fact that two types are in fact the same.
     Refl :: a := a
     deriving Typeable
 
