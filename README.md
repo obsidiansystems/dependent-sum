@@ -2,7 +2,7 @@ This library defines a dependent sum type:
 
     data DSum tag = forall a. !(tag a) :=> a
 
-By analogy to the `key => value` construction for dictionary entries in many dynamic languages, we use `key :=> value` as the constructor for dependent sums.  The key is a tag that specifies the type of the value;  for example, think of a GADT such as:
+By analogy to the `key => value` construction for dictionary entries in many dynamic languages, we use `:=>` as the constructor for dependent sums.  The key is a tag that specifies the type of the value;  for example, think of a GADT such as:
 
     data Tag a where
        AString :: Tag String
