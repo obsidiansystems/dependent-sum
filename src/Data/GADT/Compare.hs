@@ -1,13 +1,16 @@
 {-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies, FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 module Data.GADT.Compare where
 
+import Data.Maybe
 import Data.GADT.Show
 import Data.Typeable
 
 -- |A GADT witnessing equality of two types.  Its only inhabitant is 'Refl'.
 data a := b where
-    -- |A value witnessing the fact that two types are in fact the same.
     Refl :: a := a
     deriving Typeable
 
@@ -30,15 +33,14 @@ instance Read (a := a) where
         where (con,rest) = splitAt 4 s
 
 instance GRead ((:=) a) where
-    greadsPrec p s = do
-        (Refl, rest) <- readsPrec p s :: [(x := x, String)]
-        return (\x -> x Refl, rest)
+    greadsPrec p s = readsPrec p s >>= f
+        where
+            f :: (x := x, String) -> [(forall b. (forall a. x := a -> b) -> b, String)]
+            f (Refl, rest) = return (\x -> x Refl, rest)
 
 -- |A class for type-contexts which contain enough information
 -- to (at least in some cases) decide the equality of types 
 -- occurring within them.
--- 
--- Minimal instance declaration is either 'geq' or 'maybeEq'.
 class GEq f where
     -- |Produce a witness of type-equality, if one exists.
     -- 
@@ -56,33 +58,16 @@ class GEq f where
     --
     -- (Making use of the 'DSum' type from "Data.Dependent.Sum" in both examples)
     geq :: f a -> f b -> Maybe (a := b)
-    geq x y = maybeEq x y (Just Refl) Nothing
-    
-    -- |An interesting alternative formulation:
-    -- This one is nice because it's purely type-level, which means
-    -- that in some cases the type checker can statically prove
-    -- that the 'f' case is unreachable.  In other cases, it can lead
-    -- to nice concise code such as:
-    -- 
-    -- > extract :: GEq tag => tag a -> DSum tag -> Maybe a
-    -- > extract t1 (t2 :=> x) = maybeEq t1 t2 (Just x) Nothing
-    -- 
-    -- Sometimes, though, it can be hard to get the 'Refl' case's type to unify
-    -- with the assumptions properly.
-    maybeEq :: f a -> f b -> ((a ~ b) => c) -> c -> c
-    maybeEq x y f z = case geq x y of
-        Just Refl   -> f
-        Nothing     -> z
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default 
 -- implementation of '(==)'.
 defaultEq :: GEq f => f a -> f b -> Bool
-defaultEq x y = maybeEq x y True False
+defaultEq x y = isJust (geq x y)
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default 
 -- implementation of '(/=)'.
 defaultNeq :: GEq f => f a -> f b -> Bool
-defaultNeq x y = maybeEq x y False True
+defaultNeq x y = isNothing (geq x y)
 
 instance GEq ((:=) a) where
     geq Refl Refl = Just Refl

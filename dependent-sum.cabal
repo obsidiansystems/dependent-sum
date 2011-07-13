@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.1
+version:                0.2
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -14,6 +14,8 @@ category:               Data, Dependent Types
 synopsis:               Dependent sum type
 description:            Dependent sums and supporting typeclasses for
                         comparing and formatting them.
+
+tested-with:            GHC == 7.0.4, GHC == 6.12.3, GHC == 6.10.4
 
 extra-source-files:     examples/*.hs
 

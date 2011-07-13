@@ -15,21 +15,11 @@ instance Eq (Foo a) where
     (==) = defaultEq
 
 instance GEq Foo where
-    -- either 'geq' or 'maybeEq' are sufficient, but both
-    -- are given here for illustration of how to define them.
-    
     geq Foo Foo = Just Refl
     geq Bar Bar = Just Refl
     geq Baz Baz = Just Refl
     geq Qux Qux = Just Refl
     geq _   _   = Nothing
-    
-    maybeEq Foo Foo y n = y
-    maybeEq Bar Bar y n = y
-    maybeEq Baz Baz y n = y
-    maybeEq Qux Qux y n = y
-    maybeEq _   _   y n = n
-    
 
 instance EqTag Foo where
     eqTagged Foo Foo = (==)
