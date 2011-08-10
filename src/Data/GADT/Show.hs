@@ -1,4 +1,8 @@
 {-# LANGUAGE RankNTypes, ImpredicativeTypes #-}
+{-# LANGUAGE CPP #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Safe #-}
+#endif
 module Data.GADT.Show where
 
 -- |'Show'-like class for 1-type-parameter GADTs

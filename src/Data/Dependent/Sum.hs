@@ -1,9 +1,15 @@
 {-# LANGUAGE ExistentialQuantification, GADTs #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE CPP #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Safe #-}
+#endif
 module Data.Dependent.Sum where
+
+import Data.Dependent.Sum.Typeable ({- instance Typeable ... -})
 
 import Data.GADT.Show
 import Data.GADT.Compare
-import Data.Typeable
 
 import Data.Maybe (fromMaybe)
 
@@ -36,12 +42,6 @@ import Data.Maybe (fromMaybe)
 -- is equivalent to @foo bar (AString :=> "eep")@.
 data DSum tag = forall a. !(tag a) :=> a
 infixr 1 :=>
-
-instance Typeable1 t => Typeable (DSum t) where
-    typeOf ds = mkTyConApp dSumCon [typeOfT]
-        where
-            dSumCon = mkTyCon "Data.Dependent.Sum.DSum"
-            typeOfT = typeOf1 $ (undefined :: DSum f -> f a) ds
 
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
 -- to show itself as well as any value of the tagged type.  'GShow' together
