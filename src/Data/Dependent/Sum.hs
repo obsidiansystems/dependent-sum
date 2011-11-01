@@ -56,8 +56,8 @@ infixr 1 :=>
 -- following instances:
 -- 
 -- > instance GShow Tag where
--- >     gshowsPrec _showsValPrec _p AString = showString "AString"
--- >     gshowsPrec _showsValPrec _p AnInt   = showString "AnInt"
+-- >     gshowsPrec _p AString = showString "AString"
+-- >     gshowsPrec _p AnInt   = showString "AnInt"
 -- > instance ShowTag Tag where
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
@@ -121,9 +121,8 @@ instance ReadTag tag => Read (DSum tag) where
 -- 
 -- > instance GEq Tag where
 -- >     geq AString AString = Just Refl
--- >     geq AString AnInt   = Nothing
--- >     geq AnInt   AString = Nothing
 -- >     geq AnInt   AnInt   = Just Refl
+-- >     geq _       _       = Nothing
 -- > instance EqTag Tag where
 -- >     eqTagged AString AString = (==)
 -- >     eqTagged AnInt   AnInt   = (==)
