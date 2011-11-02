@@ -47,7 +47,7 @@ infixr 1 :=>
 -- to show itself as well as any value of the tagged type.  'GShow' together
 -- with this class provides the interface by which it can do so.
 --
--- @GShow tag => t@ is conceptually equivalent to something like this
+-- @ShowTag tag => t@ is conceptually equivalent to something like this
 -- imaginary syntax:  @(forall a. Inhabited (tag a) => Show a) => t@,
 -- where 'Inhabited' is an imaginary predicate that characterizes 
 -- non-empty types, and 'a' does not occur free in 't'.
@@ -88,6 +88,28 @@ instance ShowTag tag => Show (DSum tag) where
 class GRead tag => ReadTag tag where
     readTaggedPrec :: tag a -> Int -> ReadS a
 
+-- |In order to make a 'Read' instance for @DSum tag@, @tag@ must be able
+-- to parse itself as well as any value of the tagged type.  'GRead' together
+-- with this class provides the interface by which it can do so.
+--
+-- @ReadTag tag => t@ is conceptually equivalent to something like this
+-- imaginary syntax:  @(forall a. Inhabited (tag a) => Read a) => t@,
+-- where 'Inhabited' is an imaginary predicate that characterizes 
+-- non-empty types, and 'a' does not occur free in 't'.
+--
+-- The @Tag@ example type introduced in the 'DSum' section could be given the
+-- following instances:
+-- 
+-- > instance GRead Tag where
+-- >     greadsPrec _p str = case tag of
+-- >        "AString"   -> [(\k -> k AString, rest)]
+-- >        "AnInt"     -> [(\k -> k AnInt,   rest)]
+-- >        _           -> []
+-- >        where (tag, rest) = break isSpace str
+-- > instance ReadTag Tag where
+-- >     readTaggedPrec AString = readsPrec
+-- >     readTaggedPrec AnInt   = readsPrec
+-- 
 instance Read a => ReadTag ((:=) a) where
     readTaggedPrec Refl = readsPrec
 
