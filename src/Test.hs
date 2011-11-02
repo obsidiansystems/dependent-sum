@@ -15,6 +15,7 @@ import Control.Monad
 data Foo a where
     I :: Foo Int
     D :: Foo Double
+    A :: Foo a -> Foo b -> Foo (a -> b)
 
 data Bar a where
     F :: Foo a -> Bar a
@@ -37,7 +38,7 @@ deriveGCompare ''Baz
 deriveGCompare ''Qux
 
 data Squudge a where
-    E :: Eq a => Foo a -> Squudge a
+    E :: Ord a => Foo a -> Squudge a
 
 deriveGEq ''Squudge
 deriveGCompare ''Squudge
@@ -55,16 +56,32 @@ instance GEq Splort where
         Refl <- geq x1 y1
         guard (x2 == y2)
         Just Refl
-    geq _ _ = Nothing
+
+instance GCompare Splort where
+    gcompare (Splort (E x1) x2) (Splort (E y1) y2) = 
+        runGComparing $ do
+            Refl <- geq' x1 y1
+            compare' x2 y2
+            return GEQ
 
 -- Also should work for empty types
 data Empty a
 deriveGEq ''Empty
 deriveGCompare ''Empty
 
--- What about types with multiple parameters?  Not sure how to even pass the shape 
--- of the instance in, other than maybe to have a generic "fill in the blanks" version...
--- (it seems [t||] brackets can only quote types of kind *)
-data Spleeb a b c where
-    P :: Splort (a Double) -> Maybe (Empty b) -> Squudge c -> Spleeb a (a c) (a (b,c))
--- deriveGEq [d| instance GEq (Spleeb Empty b) |]
+-- Also supports types with multiple parameters, by quoting empty instance declarations
+-- ([t||] brackets won't work because they can only quote types of kind *).
+data Spleeb a b where
+    P :: a Double -> Qux b -> Spleeb a b
+-- need a cleaner 'one-shot' way of defining these - the empty instances need to appear 
+-- in the same quotation because the GEq context of the GCompare class causes stage
+-- restriction errors... seems like GHC shouldn't actually check things like that till
+-- the final splice, but whatever.
+do
+    [geqInst, gcompareInst] <- 
+        [d|
+            instance GEq a => GEq (Spleeb a)
+            instance GCompare a => GCompare (Spleeb a)
+          |]
+    
+    liftM2 (++) (deriveGEq geqInst) (deriveGCompare gcompareInst)
