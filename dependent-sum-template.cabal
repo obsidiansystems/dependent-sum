@@ -17,6 +17,8 @@ description:            Template Haskell code to generate instances of classes i
 Library
   hs-source-dirs:       src
   exposed-modules:      Data.GADT.Compare.TH
+                        Data.GADT.Show.TH
+  other-modules:        Language.Haskell.TH.Utils
   build-depends:        base >= 3 && <5,
                         dependent-sum,
                         template-haskell

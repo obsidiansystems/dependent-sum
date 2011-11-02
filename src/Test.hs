@@ -2,13 +2,18 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module Test where
 
-import Language.Haskell.TH
+import Control.Applicative
+import Control.Monad
 import Data.GADT.Compare
 import Data.GADT.Compare.TH
-import Control.Monad
+import Data.GADT.Show
+import Data.GADT.Show.TH
+import Language.Haskell.TH
 
 -- test cases: should be able to generate instances for these
 -- (Bar requiring the existence of an instance for Foo)
@@ -37,11 +42,23 @@ deriveGCompare ''Bar
 deriveGCompare ''Baz
 deriveGCompare ''Qux
 
+instance Show (Foo a) where showsPrec = gshowsPrec
+instance Show (Bar a) where showsPrec = gshowsPrec
+instance Show (Baz a) where showsPrec = gshowsPrec
+instance Show (Qux a) where showsPrec = gshowsPrec
+
+deriveGShow ''Foo
+deriveGShow ''Bar
+deriveGShow ''Baz
+deriveGShow ''Qux
+
 data Squudge a where
     E :: Ord a => Foo a -> Squudge a
 
 deriveGEq ''Squudge
 deriveGCompare ''Squudge
+deriveGShow ''Squudge
+instance Show (Squudge a) where showsPrec = gshowsPrec
 
 data Splort a where
     Splort :: Squudge a -> a -> Splort a
@@ -56,6 +73,8 @@ instance GEq Splort where
         Refl <- geq x1 y1
         guard (x2 == y2)
         Just Refl
+
+deriving instance Show a => Show (Splort a)
 
 instance GCompare Splort where
     gcompare (Splort (E x1) x2) (Splort (E y1) y2) = 
@@ -78,10 +97,17 @@ data Spleeb a b where
 -- restriction errors... seems like GHC shouldn't actually check things like that till
 -- the final splice, but whatever.
 do
-    [geqInst, gcompareInst] <- 
+    [geqInst, gcompareInst, gshowInst] <- 
         [d|
             instance GEq a => GEq (Spleeb a)
             instance GCompare a => GCompare (Spleeb a)
+            instance Show (a Double) => GShow (Spleeb a)
           |]
     
-    liftM2 (++) (deriveGEq geqInst) (deriveGCompare gcompareInst)
+    concat <$> sequence
+        [ deriveGEq      geqInst
+        , deriveGCompare gcompareInst
+        , deriveGShow    gshowInst
+        ]
+
+instance Show (a Double) => Show (Spleeb a b) where showsPrec = gshowsPrec
