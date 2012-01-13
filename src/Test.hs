@@ -5,6 +5,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 module Test where
 
 import Control.Applicative
@@ -111,3 +112,60 @@ do
         ]
 
 instance Show (a Double) => Show (Spleeb a b) where showsPrec = gshowsPrec
+
+-- another option; start from the declaration and juggle that a bit
+do
+    decs <- [d|
+        data Fnord a where Yarr :: Fnord Double; Grr :: Fnord (Int -> String)
+     |]
+    
+    geqInst         <- deriveGEq      decs
+    gcompareInst    <- deriveGCompare decs
+    gshowInst       <- deriveGShow    decs
+    
+    return $ concat
+        [ decs
+        , geqInst
+        , gcompareInst
+        , gshowInst
+        ]
+
+instance Show (Fnord a) where showsPrec = gshowsPrec
+
+-- also should handle data families:
+data family Squawk (f :: * -> *) :: * -> *
+
+-- data instance Squawk Maybe t where 
+--     Blotto  :: Maybe Int -> Squawk Maybe String
+--     Flubbet ::              Squawk Maybe (Maybe Int)
+
+do
+    -- [d|
+    --     data instance Squawk Maybe t where 
+    --         Blotto  :: Maybe Int -> Squawk Maybe String
+    --         Flubbet ::              Squawk Maybe (Maybe Int)
+    --  |]
+    
+    dec <- dataInstD
+        (return [])
+        ''Squawk
+        [ conT ''Maybe, varT (mkName "t")]
+        [ ForallC [] [EqualP (VarT (mkName "t")) (ConT ''String)] 
+            <$> normalC (mkName "Blotto") [strictType notStrict [t| Maybe Int |]] 
+        , ForallC [] [EqualP (VarT (mkName "t")) (AppT (ConT ''Maybe) (ConT ''Int))] 
+            <$> normalC (mkName "Flubbet") [] 
+        ]
+        []
+    
+    geqInst         <- deriveGEq      dec
+    gcompareInst    <- deriveGCompare dec
+    gshowInst       <- deriveGShow    dec
+    
+    return $ 
+        dec : concat
+            [ geqInst
+            , gcompareInst
+            , gshowInst
+            ]
+
+instance Show (Squawk Maybe t) where showsPrec = gshowsPrec

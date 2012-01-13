@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
@@ -12,7 +13,7 @@ import Control.Applicative
 import Control.Monad
 import Data.GADT.Compare
 import Language.Haskell.TH
-import Language.Haskell.TH.Utils
+import Language.Haskell.TH.Extras
 
 -- A type class purely for overloading purposes
 class DeriveGEQ t where
@@ -39,6 +40,14 @@ instance DeriveGEQ Dec where
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GEq) (conT name)) [geqDec]
             geqDec = geqFunction bndrs cons
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 612
+    deriveGEq (DataInstD dataCxt name tyArgs cons _) = return <$> inst
+        where
+            inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GEq) (foldl1 appT (map return $ (ConT name : init tyArgs)))) [geqDec]
+            -- TODO: figure out proper number of family parameters vs instance parameters
+            bndrs = [PlainTV v | VarT v <- tail tyArgs ]
+            geqDec = geqFunction bndrs cons
+#endif
 
 instance DeriveGEQ t => DeriveGEQ [t] where
     deriveGEq [it] = deriveGEq it
@@ -56,7 +65,7 @@ geqFunction bndrs cons = funD 'geq
 
 geqClause bndrs con = do
     let argTypes = argTypesOfCon con
-        needsGEq argType = any (`occursInType` argType) (bndrs ++ varsBoundInCon con)
+        needsGEq argType = any ((`occursInType` argType) . nameOfBinder) (bndrs ++ varsBoundInCon con)
         
         nArgs = length argTypes
     lArgNames <- replicateM nArgs (newName "x")
@@ -86,10 +95,10 @@ instance Monad (GComparing a b) where
     GComparing (Right x) >>= f = f x
 
 geq' :: GCompare t => t a -> t b -> GComparing x y (a := b)
-geq' x y = GComparing $ case gcompare x y of
+geq' x y = GComparing (case gcompare x y of
     GLT -> Left GLT
     GEQ -> Right Refl
-    GGT -> Left GGT
+    GGT -> Left GGT)
 
 compare' x y = GComparing $ case compare x y of
     LT -> Left GLT
@@ -122,6 +131,14 @@ instance DeriveGCompare Dec where
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GCompare) (conT name)) [gcompareDec]
             gcompareDec = gcompareFunction bndrs cons
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 612
+    deriveGCompare (DataInstD dataCxt name tyArgs cons _) = return <$> inst
+        where
+            inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GCompare) (foldl1 appT (map return $ (ConT name : init tyArgs)))) [gcompareDec]
+            -- TODO: figure out proper number of family parameters vs instance parameters
+            bndrs = [PlainTV v | VarT v <- tail tyArgs ]
+            gcompareDec = gcompareFunction bndrs cons
+#endif
 
 instance DeriveGCompare t => DeriveGCompare [t] where
     deriveGCompare [it] = deriveGCompare it
@@ -131,7 +148,7 @@ instance DeriveGCompare t => DeriveGCompare (Q t) where
     deriveGCompare = (>>= deriveGCompare)
 
 gcompareFunction boundVars cons
-    | null cons = funD 'gcompare [clause [bangP wildP, bangP wildP] (normalB [| undefined |]) []]
+    | null cons = funD 'gcompare [clause [] (normalB [| \x y -> seq x (seq y undefined) |]) []]
     | otherwise = funD 'gcompare (concatMap gcompareClauses cons)
     where
         -- for every constructor, first check for equality (recursively comparing 
@@ -143,7 +160,7 @@ gcompareFunction boundVars cons
             , clause [wildP, recP conName []] (normalB [| GGT |]) []
             ] where conName = nameOfCon con
         
-        needsGCompare argType con = any (`occursInType` argType) (boundVars ++ varsBoundInCon con)
+        needsGCompare argType con = any ((`occursInType` argType) . nameOfBinder) (boundVars ++ varsBoundInCon con)
         
         -- main clause; using the 'GComparing' monad, compare all arguments to the 
         -- constructor recursively, attempting to unify type variables by recursive 

@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP, TemplateHaskell #-}
 module Data.GADT.Show.TH
     ( DeriveGShow(..)
     ) where
@@ -8,7 +8,7 @@ import Control.Monad
 import Data.GADT.Show
 import Data.List
 import Language.Haskell.TH
-import Language.Haskell.TH.Utils
+import Language.Haskell.TH.Extras
 
 class DeriveGShow t where
     deriveGShow :: t -> Q [Dec]
@@ -34,6 +34,13 @@ instance DeriveGShow Dec where
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GShow) (conT name)) [gshowDec]
             gshowDec = gshowFunction cons
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 612
+    deriveGShow (DataInstD dataCxt name tyArgs cons _) = return <$> inst
+        where
+            inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GShow) (foldl1 appT (map return $ (ConT name : init tyArgs)))) [gshowDec]
+            -- TODO: figure out proper number of family parameters vs instance parameters
+            gshowDec = gshowFunction cons
+#endif
 
 instance DeriveGShow t => DeriveGShow [t] where
     deriveGShow [it] = deriveGShow it
@@ -60,7 +67,7 @@ showsName name = [| showString $(litE . stringL $ nameBase name) |]
 
 gshowBody prec conName [] = showsName conName
 gshowBody prec conName argNames = 
-    [| showParen ($prec > 10) $( compose $ intersperse [| showChar ' ' |]
+    [| showParen ($prec > 10) $( composeExprs $ intersperse [| showChar ' ' |]
         ( showsName conName
         : [ [| showsPrec 11 $arg |]
           | argName <- argNames, let arg = varE argName
