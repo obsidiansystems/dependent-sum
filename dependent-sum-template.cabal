@@ -25,4 +25,4 @@ Library
   build-depends:        base >= 3 && <5,
                         dependent-sum,
                         template-haskell,
-                        th-extras
+                        th-extras >= 0.0.0.2
