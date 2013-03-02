@@ -23,6 +23,6 @@ Library
   exposed-modules:      Data.GADT.Compare.TH
                         Data.GADT.Show.TH
   build-depends:        base >= 3 && <5,
-                        dependent-sum,
+                        dependent-sum == 0.2.*,
                         template-haskell,
                         th-extras >= 0.0.0.2
