@@ -9,20 +9,15 @@ module Data.Dependent.Sum.Typeable where
 import {-# SOURCE #-} Data.Dependent.Sum
 import Data.Typeable
 
+
+instance (Typeable1 t, Typeable1 f) => Typeable (DSum t f) where
+    typeOf ds = mkTyConApp dSumCon [typeOfF, typeOfT]
+        where
+            typeOfF = typeOf1 $ (undefined :: DSum f t -> f a) ds
+            typeOfT = typeOf1 $ (undefined :: DSum f t -> t a) ds
+
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
-
-instance Typeable1 t => Typeable (DSum t) where
-    typeOf ds = mkTyConApp dSumCon [typeOfT]
-        where
             dSumCon = mkTyCon3 "dependent-sum" "Data.Dependent.Sum" "DSum"
-            typeOfT = typeOf1 $ (undefined :: DSum f -> f a) ds
-
 #else 
-
-instance Typeable1 t => Typeable (DSum t) where
-    typeOf ds = mkTyConApp dSumCon [typeOfT]
-        where
             dSumCon = mkTyCon "Data.Dependent.Sum.DSum"
-            typeOfT = typeOf1 $ (undefined :: DSum f -> f a) ds
-
 #endif
