@@ -1,5 +1,5 @@
 name:                   dependent-sum-template
-version:                0.0.0.1
+version:                0.0.0.2
 stability:              experimental
 
 cabal-version:          >= 1.6
@@ -23,6 +23,6 @@ Library
   exposed-modules:      Data.GADT.Compare.TH
                         Data.GADT.Show.TH
   build-depends:        base >= 3 && <5,
-                        dependent-sum == 0.2.*,
+                        dependent-sum >= 0.2 && < 0.4,
                         template-haskell,
                         th-extras >= 0.0.0.2
