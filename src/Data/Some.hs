@@ -18,12 +18,12 @@ instance GShow tag => Show (Some tag) where
         . gshowsPrec 11 thing
         )
 
-instance GRead tag => Read (Some tag) where
-    readsPrec p = readParen (p > 1) $ \s -> 
-        [ withTag $ \tag -> (This tag, rest')
+instance GRead f => Read (Some f) where
+    readsPrec p = readParen (p>10) $ \s ->
+        [ (withTag This, rest')
         | let (con, rest) = splitAt 5 s
         , con == "This "
-        , (withTag, rest') <- greadsPrec p rest -- TODO: check precedence
+        , (withTag, rest') <- greadsPrec 11 rest
         ]
 
 instance GEq tag => Eq (Some tag) where
