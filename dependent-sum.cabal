@@ -37,6 +37,7 @@ Library
   exposed-modules:      Data.Dependent.Sum
                         Data.GADT.Compare
                         Data.GADT.Show
+                        Data.Some
   other-modules:        Data.Dependent.Sum.Typeable
   build-depends:        base >= 3 && <5
   if impl(ghc >= 7.2)
