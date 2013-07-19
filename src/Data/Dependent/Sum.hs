@@ -10,6 +10,7 @@
 #endif
 module Data.Dependent.Sum where
 
+import Control.Applicative
 import Data.Dependent.Sum.Typeable ({- instance Typeable ... -})
 
 import Data.GADT.Show
@@ -45,7 +46,10 @@ import Data.Maybe (fromMaybe)
 -- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
 -- is equivalent to @foo bar (AString :=> "eep")@.
 data DSum tag f = forall a. !(tag a) :=> f a
-infixr 1 :=>
+infixr 1 :=>, ==>
+
+(==>) :: Applicative f => tag a -> a -> DSum tag f
+k ==> v = k :=> pure v
 
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
 -- to show itself as well as any value of the tagged type.  'GShow' together
