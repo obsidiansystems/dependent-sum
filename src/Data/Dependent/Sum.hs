@@ -1,12 +1,19 @@
 {-# LANGUAGE ExistentialQuantification, GADTs #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
 #endif
 module Data.Dependent.Sum where
 
+#if MIN_VERSION_base(4,7,0)
+import Data.Typeable (Typeable)
+#else
 import Data.Dependent.Sum.Typeable ({- instance Typeable ... -})
+#endif
 
 import Data.GADT.Show
 import Data.GADT.Compare
@@ -41,6 +48,9 @@ import Data.Maybe (fromMaybe)
 -- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
 -- is equivalent to @foo bar (AString :=> "eep")@.
 data DSum tag = forall a. !(tag a) :=> a
+#if MIN_VERSION_base(4,7,0)
+    deriving Typeable
+#endif
 infixr 1 :=>
 
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able

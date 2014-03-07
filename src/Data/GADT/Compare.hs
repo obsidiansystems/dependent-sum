@@ -7,11 +7,23 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
 #endif
-module Data.GADT.Compare where
+
+module Data.GADT.Compare
+    ( module Data.GADT.Compare
+#if MIN_VERSION_base(4,7,0)
+    , (:~:)(Refl)
+#endif
+    ) where
 
 import Data.Maybe
 import Data.GADT.Show
 import Data.Typeable
+
+#if MIN_VERSION_base(4,7,0)
+-- |Backwards compatibility alias; as of GHC 7.8, this is the same as `(:~:)`.
+type (:=) = (:~:)
+
+#else
 
 -- |A GADT witnessing equality of two types.  Its only inhabitant is 'Refl'.
 data a := b where
@@ -27,14 +39,16 @@ instance Ord (a := b) where
 instance Show (a := b) where
     showsPrec _ Refl = showString "Refl"
 
-instance GShow ((:=) a) where
-    gshowsPrec _ Refl = showString "Refl"
-
 instance Read (a := a) where
     readsPrec _ s = case con of
         "Refl"  -> [(Refl, rest)]
         _       -> []
         where (con,rest) = splitAt 4 s
+
+#endif
+
+instance GShow ((:=) a) where
+    gshowsPrec _ Refl = showString "Refl"
 
 instance GRead ((:=) a) where
     greadsPrec p s = readsPrec p s >>= f

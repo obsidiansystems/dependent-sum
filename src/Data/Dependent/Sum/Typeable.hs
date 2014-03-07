@@ -4,6 +4,9 @@
 #endif
 -- |Separate module for Typeable declaration, to minimize the amount of
 -- visual inspection required to determine that this package is "safe"
+--
+-- This separation is not necessary with base >= 4.7, so this module will
+-- not be compiled at all with GHC >= 7.8.
 module Data.Dependent.Sum.Typeable where
 
 import {-# SOURCE #-} Data.Dependent.Sum
