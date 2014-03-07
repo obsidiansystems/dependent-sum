@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.3
+version:                0.3.0.1
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -24,7 +24,7 @@ description:            A dependent sum is a generalization of a
                         dependent sum types by using your own \"tag\"
                         types.
 
-tested-with:            GHC == 7.0.4, GHC == 6.12.3, GHC == 6.10.4
+tested-with:            GHC == 7.6.3, GHC==7.8.0.20140228
 
 extra-source-files:     examples/*.hs
 
@@ -38,7 +38,9 @@ Library
                         Data.GADT.Compare
                         Data.GADT.Show
                         Data.Some
-  other-modules:        Data.Dependent.Sum.Typeable
+  if impl(ghc < 7.8)
+    other-modules:      Data.Dependent.Sum.Typeable
+  
   build-depends:        base >= 3 && <5
   if impl(ghc >= 7.2)
     ghc-options:        -trust base
