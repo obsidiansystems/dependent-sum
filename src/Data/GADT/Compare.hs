@@ -1,10 +1,12 @@
 {-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies, FlexibleInstances #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE PolyKinds #-}
+#endif
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
 #endif
