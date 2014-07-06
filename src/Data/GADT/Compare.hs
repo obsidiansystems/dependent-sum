@@ -159,8 +159,6 @@ instance GRead (GOrdering a) where
         _       -> []
         where (con, rest) = splitAt 3 s
 
--- |Type class for orderable GADT-like structures.  When 2 things are equal,
--- must return a witness that their parameter types are equal as well (GEQ).
 -- |Type class for comparable GADT-like structures.  When 2 things are equal,
 -- must return a witness that their parameter types are equal as well ('GEQ').
 class GEq f => GCompare f where
