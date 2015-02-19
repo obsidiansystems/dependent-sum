@@ -1,3 +1,6 @@
+dependent-sum ![Build Status](https://travis-ci.org/mokus0/dependent-sum.svg?branch=master)
+==============
+
 This library defines a dependent sum type:
 
     data DSum tag = forall a. !(tag a) :=> a
