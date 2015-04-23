@@ -93,6 +93,9 @@ instance Monad (GComparing a b) where
     return = GComparing . Right
     GComparing (Left  x) >>= f = GComparing (Left x)
     GComparing (Right x) >>= f = f x
+instance Applicative (GComparing a b) where
+    pure = return
+    (<*>) = ap 
 
 geq' :: GCompare t => t a -> t b -> GComparing x y (a := b)
 geq' x y = GComparing (case gcompare x y of
