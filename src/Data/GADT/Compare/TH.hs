@@ -3,6 +3,9 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE PolyKinds #-}
+#endif
 module Data.GADT.Compare.TH
     ( DeriveGEQ(..)
     , DeriveGCompare(..)
