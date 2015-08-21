@@ -1,4 +1,4 @@
-dependent-sum ![Build Status](https://travis-ci.org/mokus0/dependent-sum.svg?branch=master)
+dependent-sum [![Build Status](https://travis-ci.org/mokus0/dependent-sum.svg)](https://travis-ci.org/mokus0/dependent-sum)
 ==============
 
 This library defines a dependent sum type:
