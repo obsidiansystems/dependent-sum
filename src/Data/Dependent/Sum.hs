@@ -1,6 +1,10 @@
 {-# LANGUAGE ExistentialQuantification, GADTs #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE CPP #-}
@@ -8,6 +12,8 @@
 {-# LANGUAGE Safe #-}
 #endif
 module Data.Dependent.Sum where
+
+import Control.Applicative
 
 #if MIN_VERSION_base(4,7,0)
 import Data.Typeable (Typeable)
@@ -47,11 +53,14 @@ import Data.Maybe (fromMaybe)
 -- would be expected (@Rec :=> (AnInt :=> (3 + 4))@) and has type @DSum Tag@.
 -- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
 -- is equivalent to @foo bar (AString :=> "eep")@.
-data DSum tag = forall a. !(tag a) :=> a
+data DSum tag f = forall a. !(tag a) :=> f a
 #if MIN_VERSION_base(4,7,0)
     deriving Typeable
 #endif
-infixr 1 :=>
+infixr 1 :=>, ==>
+
+(==>) :: Applicative f => tag a -> a -> DSum tag f
+k ==> v = k :=> pure v
 
 -- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
 -- to show itself as well as any value of the tagged type.  'GShow' together
@@ -72,31 +81,31 @@ infixr 1 :=>
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
-class GShow tag => ShowTag tag where
+class GShow tag => ShowTag tag f where
     -- |Given a value of type @tag a@, return the 'showsPrec' function for 
     -- the type parameter @a@.
-    showTaggedPrec :: tag a -> Int ->     a -> ShowS
+    showTaggedPrec :: tag a -> Int -> f a -> ShowS
 
-instance Show a => ShowTag ((:=) a) where
+instance Show (f a) => ShowTag ((:=) a) f where
     showTaggedPrec Refl = showsPrec
 
 -- This instance is questionable.  It works, but is pretty useless.
-instance Show a => ShowTag (GOrdering a) where
+instance Show (f a) => ShowTag (GOrdering a) f where
     showTaggedPrec GEQ = showsPrec
     showTaggedPrec _   = \p _ -> showParen (p > 10)
         ( showString "error "
         . shows "type information lost into the mists of oblivion"
         )
 
-instance ShowTag tag => Show (DSum tag) where
+instance ShowTag tag f => Show (DSum tag f) where
     showsPrec p (tag :=> value) = showParen (p >= 10)
         ( gshowsPrec 0 tag
         . showString " :=> "
         . showTaggedPrec tag 1 value
         )
 
-class GRead tag => ReadTag tag where
-    readTaggedPrec :: tag a -> Int -> ReadS a
+class GRead tag => ReadTag tag f where
+    readTaggedPrec :: tag a -> Int -> ReadS (f a)
 
 -- |In order to make a 'Read' instance for @DSum tag@, @tag@ must be able
 -- to parse itself as well as any value of the tagged type.  'GRead' together
@@ -120,7 +129,7 @@ class GRead tag => ReadTag tag where
 -- >     readTaggedPrec AString = readsPrec
 -- >     readTaggedPrec AnInt   = readsPrec
 -- 
-instance Read a => ReadTag ((:=) a) where
+instance Read (f a) => ReadTag ((:=) a) f where
     readTaggedPrec Refl = readsPrec
 
 -- This instance is questionable.  It works, but is partial (and is also pretty useless)
@@ -133,7 +142,7 @@ instance Read a => ReadTag ((:=) a) where
 --         , (msg, rest') <- reads rest :: [(String, String)]
 --         ]
 
-instance ReadTag tag => Read (DSum tag) where
+instance ReadTag tag f => Read (DSum tag f) where
     readsPrec p = readParen (p > 1) $ \s -> 
         concat
             [ withTag $ \tag ->
@@ -161,15 +170,15 @@ instance ReadTag tag => Read (DSum tag) where
 -- 
 -- Note that 'eqTagged' is not called until after the tags have been
 -- compared, so it only needs to consider the cases where 'gcompare' returns 'GEQ'.
-class GEq tag => EqTag tag where
+class GEq tag => EqTag tag f where
     -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
     -- return the '==' function for the type @a@.
-    eqTagged :: tag a -> tag a -> a -> a -> Bool
+    eqTagged :: tag a -> tag a -> f a -> f a -> Bool
 
-instance Eq a => EqTag ((:=) a) where
+instance Eq (f a) => EqTag ((:=) a) f where
     eqTagged Refl Refl = (==)
 
-instance EqTag tag => Eq (DSum tag) where
+instance EqTag tag f => Eq (DSum tag f) where
     (t1 :=> x1) == (t2 :=> x2)  = fromMaybe False $ do
         Refl <- geq t1 t2
         return (eqTagged t1 t2 x1 x2)
@@ -191,15 +200,15 @@ instance EqTag tag => Eq (DSum tag) where
 -- 
 -- As with 'eqTagged', 'compareTagged' only needs to consider cases where
 -- 'gcompare' returns 'GEQ'.
-class (EqTag tag, GCompare tag) => OrdTag tag where
+class (EqTag tag f, GCompare tag) => OrdTag tag f where
     -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
     -- return the 'compare' function for the type @a@.
-    compareTagged :: tag a -> tag a -> a -> a -> Ordering
+    compareTagged :: tag a -> tag a -> f a -> f a -> Ordering
 
-instance Ord a => OrdTag ((:=) a) where
+instance Ord (f a) => OrdTag ((:=) a) f where
     compareTagged Refl Refl = compare
 
-instance OrdTag tag => Ord (DSum tag) where
+instance OrdTag tag f => Ord (DSum tag f) where
     compare (t1 :=> x1) (t2 :=> x2)  = case gcompare t1 t2 of
         GLT -> LT
         GGT -> GT

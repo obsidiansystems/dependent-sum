@@ -167,3 +167,7 @@ class GEq f => GCompare f where
 instance GCompare ((:=) a) where
     gcompare Refl Refl = GEQ
 
+defaultCompare :: GCompare f => f a -> f b -> Ordering
+defaultCompare x y = weakenOrdering (gcompare x y)
+
+
