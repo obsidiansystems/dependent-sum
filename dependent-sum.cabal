@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.3.2.0
+version:                0.3.2.1
 stability:              provisional
 
 cabal-version:          >= 1.6
