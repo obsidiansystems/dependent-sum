@@ -30,21 +30,41 @@ instance DeriveGEQ Name where
             _ -> fail "deriveGEq: the name of a type constructor is required"
 
 instance DeriveGEQ Dec where
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+    deriveGEq (InstanceD overlaps cxt (AppT instType dataType) decs)
+#else
     deriveGEq (InstanceD cxt (AppT instType dataType) decs)
+#endif
         | headOfType instType == ''GEq = do
             let dataTypeName = headOfType dataType
             dataTypeInfo <- reify dataTypeName
             case dataTypeInfo of
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+                TyConI (DataD dataCxt name bndrs _ cons _) -> do
+#else
                 TyConI (DataD dataCxt name bndrs cons _) -> do
+#endif
                     geqDec <- geqFunction bndrs cons
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+                    return [InstanceD overlaps cxt (AppT instType dataType) [geqDec]]
+#else
                     return [InstanceD cxt (AppT instType dataType) [geqDec]]
+#endif
                 _ -> fail "deriveGEq: the name of an algebraic data type constructor is required"
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+    deriveGEq (DataD dataCxt name bndrs _ cons _) = return <$> inst
+#else
     deriveGEq (DataD dataCxt name bndrs cons _) = return <$> inst
+#endif
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GEq) (conT name)) [geqDec]
             geqDec = geqFunction bndrs cons
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 612
+#if __GLASGOW_HASKELL__ >= 800
+    deriveGEq (DataInstD dataCxt name tyArgs _ cons _) = return <$> inst
+#else
     deriveGEq (DataInstD dataCxt name tyArgs cons _) = return <$> inst
+#endif
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GEq) (foldl1 appT (map return $ (ConT name : init tyArgs)))) [geqDec]
             -- TODO: figure out proper number of family parameters vs instance parameters
@@ -124,21 +144,41 @@ instance DeriveGCompare Name where
             _ -> fail "deriveGCompare: the name of a type constructor is required"
 
 instance DeriveGCompare Dec where
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+    deriveGCompare (InstanceD overlaps cxt (AppT instType dataType) decs)
+#else
     deriveGCompare (InstanceD cxt (AppT instType dataType) decs)
+#endif
         | headOfType instType == ''GCompare = do
             let dataTypeName = headOfType dataType
             dataTypeInfo <- reify dataTypeName
             case dataTypeInfo of
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+                TyConI (DataD dataCxt name bndrs _ cons _) -> do
+#else
                 TyConI (DataD dataCxt name bndrs cons _) -> do
+#endif
                     gcompareDec <- gcompareFunction bndrs cons
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+                    return [InstanceD overlaps cxt (AppT instType dataType) [gcompareDec]]
+#else
                     return [InstanceD cxt (AppT instType dataType) [gcompareDec]]
+#endif
                 _ -> fail "deriveGCompare: the name of an algebraic data type constructor is required"
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
+    deriveGCompare (DataD dataCxt name bndrs _ cons _) = return <$> inst
+#else
     deriveGCompare (DataD dataCxt name bndrs cons _) = return <$> inst
+#endif
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GCompare) (conT name)) [gcompareDec]
             gcompareDec = gcompareFunction bndrs cons
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 612
+#if __GLASGOW_HASKELL__ >= 800
+    deriveGCompare (DataInstD dataCxt name tyArgs _ cons _) = return <$> inst
+#else
     deriveGCompare (DataInstD dataCxt name tyArgs cons _) = return <$> inst
+#endif
         where
             inst = instanceD (cxt (map return dataCxt)) (appT (conT ''GCompare) (foldl1 appT (map return $ (ConT name : init tyArgs)))) [gcompareDec]
             -- TODO: figure out proper number of family parameters vs instance parameters
