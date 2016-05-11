@@ -10,6 +10,7 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
 #endif
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.GADT.Compare
     ( module Data.GADT.Compare
@@ -56,8 +57,8 @@ instance GShow ((:=) a) where
 instance GRead ((:=) a) where
     greadsPrec p s = readsPrec p s >>= f
         where
-            f :: (x := x, String) -> [(forall b. (forall a. x := a -> b) -> b, String)]
-            f (Refl, rest) = return (\x -> x Refl, rest)
+            f :: forall x. (x := x, String) -> [(forall b. (forall a. x := a -> b) -> b, String)]
+            f (Refl, rest) = return ((\x -> x Refl) :: forall b. (forall a. x := a -> b) -> b, rest)
 
 -- |A class for type-contexts which contain enough information
 -- to (at least in some cases) decide the equality of types 
@@ -91,7 +92,7 @@ defaultNeq :: GEq f => f a -> f b -> Bool
 defaultNeq x y = isNothing (geq x y)
 
 instance GEq ((:=) a) where
-    geq Refl Refl = Just Refl
+    geq (Refl :: a := b) (Refl :: a := c) = Just (Refl :: b := c)
 
 -- This instance seems nice, but it's simply not right:
 -- 
