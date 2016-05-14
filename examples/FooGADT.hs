@@ -1,7 +1,9 @@
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 module FooGADT where
 
 import Data.Dependent.Sum
+import Data.Functor.Identity
 import Data.GADT.Show
 import Data.GADT.Compare
 
@@ -21,7 +23,7 @@ instance GEq Foo where
     geq Qux Qux = Just Refl
     geq _   _   = Nothing
 
-instance EqTag Foo where
+instance EqTag Foo Identity where
     eqTagged Foo Foo = (==)
     eqTagged Bar Bar = (==)
     eqTagged Baz Baz = (==)
@@ -43,7 +45,7 @@ instance GCompare Foo where
     
     gcompare Qux Qux = GEQ
 
-instance OrdTag Foo where
+instance OrdTag Foo Identity where
     compareTagged Foo Foo = compare
     compareTagged Bar Bar = compare
     compareTagged Baz Baz = compare
@@ -60,7 +62,7 @@ instance Show (Foo a) where
 instance GShow Foo where
     gshowsPrec = showsPrec
 
-instance ShowTag Foo where
+instance ShowTag Foo Identity where
     showTaggedPrec Foo = showsPrec
     showTaggedPrec Bar = showsPrec
     showTaggedPrec Baz = showsPrec
@@ -76,18 +78,23 @@ instance GRead Foo where
         _     -> []
         where (tag, rest) = splitAt 3 str
 
-instance ReadTag Foo where
+instance ReadTag Foo Identity where
     readTaggedPrec Foo = readsPrec
     readTaggedPrec Bar = readsPrec
     readTaggedPrec Baz = readsPrec
     readTaggedPrec Qux = readsPrec
 
+foo :: Double -> DSum Foo Identity
+foo x = Foo ==> x
 
-foo x = Foo :=> x
-bar x = Bar :=> x
-baz x = Baz :=> x
-qux x = Qux :=> x
+bar :: Int -> DSum Foo Identity
+bar x = Bar ==> x
 
+baz :: String -> DSum Foo Identity
+baz x = Baz ==> x
+
+qux :: Double -> DSum Foo Identity
+qux x = Qux ==> x
 
 xs = [foo pi, bar 100, baz "hello world", qux (exp 1)]
 xs' = read (show xs) `asTypeOf` xs
