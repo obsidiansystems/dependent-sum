@@ -1,6 +1,5 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
@@ -28,7 +27,7 @@ instance GShow tag => Show (Some tag) where
 
 instance GRead f => Read (Some f) where
     readsPrec p = readParen (p>10) $ \s ->
-        [ (withTag This, rest')
+        [ (getGReadResult withTag This, rest')
         | let (con, rest) = splitAt 5 s
         , con == "This "
         , (withTag, rest') <- greadsPrec 11 rest

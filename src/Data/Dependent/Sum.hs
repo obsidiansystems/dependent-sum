@@ -1,12 +1,10 @@
 {-# LANGUAGE ExistentialQuantification, GADTs #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
@@ -148,7 +146,7 @@ instance Read (f a) => ReadTag ((:=) a) f where
 instance ReadTag tag f => Read (DSum tag f) where
     readsPrec p = readParen (p > 1) $ \s -> 
         concat
-            [ withTag $ \tag ->
+            [ getGReadResult withTag $ \tag ->
                 [ (tag :=> val, rest'')
                 | (val, rest'') <- readTaggedPrec tag 1 rest'
                 ]

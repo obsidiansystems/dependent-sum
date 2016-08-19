@@ -2,7 +2,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
@@ -57,8 +56,8 @@ instance GShow ((:=) a) where
 instance GRead ((:=) a) where
     greadsPrec p s = readsPrec p s >>= f
         where
-            f :: forall x. (x := x, String) -> [(forall b. (forall a. x := a -> b) -> b, String)]
-            f (Refl, rest) = return ((\x -> x Refl) :: forall b. (forall a. x := a -> b) -> b, rest)
+            f :: forall x. (x := x, String) -> [(GReadResult ((:=) x), String)]
+            f (Refl, rest) = return (GReadResult (\x -> x Refl) , rest)
 
 -- |A class for type-contexts which contain enough information
 -- to (at least in some cases) decide the equality of types 
@@ -154,9 +153,9 @@ instance GShow (GOrdering a) where
 
 instance GRead (GOrdering a) where
     greadsPrec _ s = case con of
-        "GGT"   -> [(\x -> x GGT, rest)]
-        "GEQ"   -> [(\x -> x GEQ, rest)]
-        "GLT"   -> [(\x -> x GLT, rest)]
+        "GGT"   -> [(GReadResult (\x -> x GGT), rest)]
+        "GEQ"   -> [(GReadResult (\x -> x GEQ), rest)]
+        "GLT"   -> [(GReadResult (\x -> x GLT), rest)]
         _       -> []
         where (con, rest) = splitAt 3 s
 
@@ -170,5 +169,3 @@ instance GCompare ((:=) a) where
 
 defaultCompare :: GCompare f => f a -> f b -> Ordering
 defaultCompare x y = weakenOrdering (gcompare x y)
-
-
