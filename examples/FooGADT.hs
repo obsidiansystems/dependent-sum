@@ -71,10 +71,10 @@ instance ShowTag Foo Identity where
 
 instance GRead Foo where
     greadsPrec _ str = case tag of
-        "Foo" -> [(\k -> k Foo, rest)]
-        "Bar" -> [(\k -> k Bar, rest)]
-        "Baz" -> [(\k -> k Baz, rest)]
-        "Qux" -> [(\k -> k Qux, rest)]
+        "Foo" -> [(GReadResult (\k -> k Foo), rest)]
+        "Bar" -> [(GReadResult (\k -> k Bar), rest)]
+        "Baz" -> [(GReadResult (\k -> k Baz), rest)]
+        "Qux" -> [(GReadResult (\k -> k Qux), rest)]
         _     -> []
         where (tag, rest) = splitAt 3 str
 

@@ -34,26 +34,26 @@ import Data.Maybe (fromMaybe)
 -- >    AString :: Tag String
 -- >    AnInt   :: Tag Int
 -- 
--- Then, we have the following valid expressions of type @DSum Tag@:
+-- Then, we have the following valid expressions of type @Applicative f => DSum Tag f@:
 --
--- > AString :=> "hello!"
--- > AnInt   :=> 42
+-- > AString ==> "hello!"
+-- > AnInt   ==> 42
 -- 
--- And we can write functions that consume @DSum Tag@ values by matching, 
+-- And we can write functions that consume @DSum Tag f@ values by matching, 
 -- such as:
 -- 
--- > toString :: DSum Tag -> String
--- > toString (AString :=> str) = str
--- > toString (AnInt   :=> int) = show int
+-- > toString :: DSum Tag Identity -> String
+-- > toString (AString :=> Identity str) = str
+-- > toString (AnInt   :=> Identity int) = show int
 -- 
--- By analogy to the (key => value) construction for dictionary entries in 
--- many dynamic languages, we use (key :=> value) as the constructor for 
--- dependent sums.  The :=> operator has very low precedence and binds to 
--- the right, so if the @Tag@ GADT is extended with an additional constructor
--- @Rec :: Tag (DSum Tag)@, then @Rec :=> AnInt :=> 3 + 4@ is parsed as
--- would be expected (@Rec :=> (AnInt :=> (3 + 4))@) and has type @DSum Tag@.
--- Its precedence is just above that of '$', so @foo bar $ AString :=> "eep"@
--- is equivalent to @foo bar (AString :=> "eep")@.
+-- By analogy to the (key => value) construction for dictionary entries in
+-- many dynamic languages, we use (key :=> value) as the constructor for
+-- dependent sums.  The :=> and ==> operators have very low precedence and
+-- bind to the right, so if the @Tag@ GADT is extended with an additional
+-- constructor @Rec :: Tag (DSum Tag Identity)@, then @Rec ==> AnInt ==> 3 + 4@
+-- is parsed as would be expected (@Rec ==> (AnInt ==> (3 + 4))@) and has type
+-- @DSum Identity Tag@.  Its precedence is just above that of '$', so
+-- @foo bar $ AString ==> "eep"@ is equivalent to @foo bar (AString ==> "eep")@.
 data DSum tag f = forall a. !(tag a) :=> f a
 #if MIN_VERSION_base(4,7,0)
     deriving Typeable
@@ -63,28 +63,28 @@ infixr 1 :=>, ==>
 (==>) :: Applicative f => tag a -> a -> DSum tag f
 k ==> v = k :=> pure v
 
--- |In order to make a 'Show' instance for @DSum tag@, @tag@ must be able
+-- |In order to make a 'Show' instance for @DSum tag f@, @tag@ must be able
 -- to show itself as well as any value of the tagged type.  'GShow' together
 -- with this class provides the interface by which it can do so.
 --
--- @ShowTag tag => t@ is conceptually equivalent to something like this
--- imaginary syntax:  @(forall a. Inhabited (tag a) => Show a) => t@,
+-- @ShowTag tag f => t@ is conceptually equivalent to something like this
+-- imaginary syntax:  @(forall a. Inhabited (tag a) => Show (f a)) => t@,
 -- where 'Inhabited' is an imaginary predicate that characterizes 
--- non-empty types, and 'a' does not occur free in 't'.
+-- non-empty types, and 'f' and 'a' do not occur free in 't'.
 --
 -- The @Tag@ example type introduced in the 'DSum' section could be given the
--- following instances:
+-- following instances, among others:
 -- 
 -- > instance GShow Tag where
 -- >     gshowsPrec _p AString = showString "AString"
 -- >     gshowsPrec _p AnInt   = showString "AnInt"
--- > instance ShowTag Tag where
+-- > instance ShowTag Tag [] where
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
 class GShow tag => ShowTag tag f where
     -- |Given a value of type @tag a@, return the 'showsPrec' function for 
-    -- the type parameter @a@.
+    -- the type @f a@.
     showTaggedPrec :: tag a -> Int -> f a -> ShowS
 
 instance Show (f a) => ShowTag ((:=) a) f where
@@ -108,17 +108,17 @@ instance ShowTag tag f => Show (DSum tag f) where
 class GRead tag => ReadTag tag f where
     readTaggedPrec :: tag a -> Int -> ReadS (f a)
 
--- |In order to make a 'Read' instance for @DSum tag@, @tag@ must be able
+-- |In order to make a 'Read' instance for @DSum tag f@, @tag@ must be able
 -- to parse itself as well as any value of the tagged type.  'GRead' together
 -- with this class provides the interface by which it can do so.
 --
--- @ReadTag tag => t@ is conceptually equivalent to something like this
--- imaginary syntax:  @(forall a. Inhabited (tag a) => Read a) => t@,
+-- @ReadTag tag f => t@ is conceptually equivalent to something like this
+-- imaginary syntax:  @(forall a. Inhabited (tag a) => Read (f a)) => t@,
 -- where 'Inhabited' is an imaginary predicate that characterizes 
--- non-empty types, and 'a' does not occur free in 't'.
+-- non-empty types, and 'f' and 'a' do not occur free in 't'.
 --
 -- The @Tag@ example type introduced in the 'DSum' section could be given the
--- following instances:
+-- following instances, among others:
 -- 
 -- > instance GRead Tag where
 -- >     greadsPrec _p str = case tag of
@@ -126,7 +126,7 @@ class GRead tag => ReadTag tag f where
 -- >        "AnInt"     -> [(\k -> k AnInt,   rest)]
 -- >        _           -> []
 -- >        where (tag, rest) = break isSpace str
--- > instance ReadTag Tag where
+-- > instance ReadTag Tag [] where
 -- >     readTaggedPrec AString = readsPrec
 -- >     readTaggedPrec AnInt   = readsPrec
 -- 
@@ -155,7 +155,7 @@ instance ReadTag tag f => Read (DSum tag f) where
             , con == " :=> "
             ]
 
--- |In order to test @DSum tag@ for equality, @tag@ must know how to test
+-- |In order to test @DSum tag f@ for equality, @tag@ must know how to test
 -- both itself and its tagged values for equality.  'EqTag' defines
 -- the interface by which they are expected to do so.
 -- 
@@ -165,7 +165,7 @@ instance ReadTag tag f => Read (DSum tag f) where
 -- >     geq AString AString = Just Refl
 -- >     geq AnInt   AnInt   = Just Refl
 -- >     geq _       _       = Nothing
--- > instance EqTag Tag where
+-- > instance EqTag Tag [] where
 -- >     eqTagged AString AString = (==)
 -- >     eqTagged AnInt   AnInt   = (==)
 -- 
@@ -173,7 +173,7 @@ instance ReadTag tag f => Read (DSum tag f) where
 -- compared, so it only needs to consider the cases where 'gcompare' returns 'GEQ'.
 class GEq tag => EqTag tag f where
     -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
-    -- return the '==' function for the type @a@.
+    -- return the '==' function for the type @f a@.
     eqTagged :: tag a -> tag a -> f a -> f a -> Bool
 
 instance Eq (f a) => EqTag ((:=) a) f where
@@ -184,7 +184,7 @@ instance EqTag tag f => Eq (DSum tag f) where
         Refl <- geq t1 t2
         return (eqTagged t1 t2 x1 x2)
 
--- |In order to compare @DSum tag@ values, @tag@ must know how to compare
+-- |In order to compare @DSum tag f@ values, @tag@ must know how to compare
 -- both itself and its tagged values.  'OrdTag' defines the 
 -- interface by which they are expected to do so.
 -- 
@@ -195,7 +195,7 @@ instance EqTag tag f => Eq (DSum tag f) where
 -- >     gcompare AString AnInt   = GLT
 -- >     gcompare AnInt   AString = GGT
 -- >     gcompare AnInt   AnInt   = GEQ
--- > instance OrdTag Tag where
+-- > instance OrdTag Tag [] where
 -- >     compareTagged AString AString = compare
 -- >     compareTagged AnInt   AnInt   = compare
 -- 
@@ -203,7 +203,7 @@ instance EqTag tag f => Eq (DSum tag f) where
 -- 'gcompare' returns 'GEQ'.
 class (EqTag tag f, GCompare tag) => OrdTag tag f where
     -- |Given two values of type @tag a@ (for which 'gcompare' returns 'GEQ'),
-    -- return the 'compare' function for the type @a@.
+    -- return the 'compare' function for the type @f a@.
     compareTagged :: tag a -> tag a -> f a -> f a -> Ordering
 
 instance Ord (f a) => OrdTag ((:=) a) f where
