@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
@@ -23,12 +24,10 @@ gshows = gshowsPrec (-1)
 gshow :: (GShow t) => t a -> String
 gshow x = gshows x ""
 
-newtype GReadResult t = GReadResult
-  { getGReadResult :: forall b . (forall a . t a -> b) -> b }
+data GReadResult t where
+  GReadResult :: {getGReadResult :: t a} -> GReadResult t
 
--- |@GReadS t@ is equivalent to @ReadS (forall b. (forall a. t a -> b) -> b)@, which is 
--- in turn equivalent to @ReadS (Exists t)@ (with @data Exists t where Exists :: t a -> Exists t@)
-type GReadS t = String -> [(GReadResult t, String)]
+type GReadS t = ReadS (GReadResult t)
 
 -- |'Read'-like class for 1-type-parameter GADTs.  Unlike 'GShow', this one cannot be 
 -- mechanically derived from a 'Read' instance because 'greadsPrec' must choose the phantom
@@ -41,7 +40,7 @@ greads = greadsPrec (-1)
 
 gread :: GRead t => String -> (forall a. t a -> b) -> b
 gread s g = case hd [f | (f, "") <- greads s] of
-              GReadResult res -> res g
+              GReadResult res -> g res
     where
         hd (x:_) = x
         hd _ = error "gread: no parse"

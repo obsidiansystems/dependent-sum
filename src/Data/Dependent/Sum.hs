@@ -146,10 +146,10 @@ instance Read (f a) => ReadTag ((:=) a) f where
 instance ReadTag tag f => Read (DSum tag f) where
     readsPrec p = readParen (p > 1) $ \s -> 
         concat
-            [ getGReadResult withTag $ \tag ->
+            [ case withTag of {GReadResult tag ->
                 [ (tag :=> val, rest'')
                 | (val, rest'') <- readTaggedPrec tag 1 rest'
-                ]
+                ]}
             | (withTag, rest) <- greadsPrec p s
             , let (con, rest') = splitAt 5 rest
             , con == " :=> "
