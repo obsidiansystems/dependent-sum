@@ -13,8 +13,8 @@ By analogy to the `key => value` construction for dictionary entries in many dyn
 
 Then, we have the following valid expressions of type `DSum Tag []`:
 
-    StringKey   => ["hello!"]
-    IntKey      => [42]
+    StringKey   :=> ["hello!"]
+    IntKey      :=> [42]
 
 And we can write functions that consume `DSum Tag` values by matching, such as:
 
