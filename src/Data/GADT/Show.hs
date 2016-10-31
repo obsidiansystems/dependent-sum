@@ -6,6 +6,9 @@
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
 #endif
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE DefaultSignatures #-}
+#endif
 module Data.GADT.Show where
 
 -- |'Show'-like class for 1-type-parameter GADTs.  @GShow t => ...@ is equivalent to something
@@ -15,6 +18,8 @@ module Data.GADT.Show where
 -- > instance GShow t where gshowsPrec = showsPrec
 class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
+    default gshowsPrec :: Show (t a) => Int -> t a -> ShowS
+    gshowsPrec = showsPrec
 
 
 gshows :: GShow t => t a -> ShowS
