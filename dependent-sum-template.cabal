@@ -6,7 +6,7 @@ cabal-version:          >= 1.8
 build-type:             Simple
 
 author:                 James Cook <mokus@deepbondi.net>
-maintainer:             James Cook <mokus@deepbondi.net>
+maintainer:             Ryan Trinkle <ryan.trinkle@obsidian.systems>
 license:                PublicDomain
 homepage:               /dev/null
 
@@ -16,7 +16,7 @@ description:            Template Haskell code to generate instances of classes i
 
 source-repository head
   type: git
-  location: git://github.com/mokus0/dependent-sum-template.git
+  location: https://github.com/mokus0/dependent-sum-template
 
 Library
   hs-source-dirs:       src
