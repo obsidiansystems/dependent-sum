@@ -2,7 +2,7 @@ name:                   dependent-sum-template
 version:                0.0.0.5
 stability:              experimental
 
-cabal-version:          >= 1.6
+cabal-version:          >= 1.8
 build-type:             Simple
 
 author:                 James Cook <mokus@deepbondi.net>
@@ -26,3 +26,11 @@ Library
                         dependent-sum >= 0.2 && < 0.5,
                         template-haskell,
                         th-extras >= 0.0.0.2
+
+test-suite test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: test.hs
+  build-depends: base
+               , dependent-sum
+               , dependent-sum-template

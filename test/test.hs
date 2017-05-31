@@ -1,20 +1,41 @@
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
-module Test where
-
-import Control.Applicative
+{-# LANGUAGE TemplateHaskell #-}
 import Control.Monad
+import Data.Dependent.Sum
+import Data.Functor.Identity
 import Data.GADT.Compare
 import Data.GADT.Compare.TH
 import Data.GADT.Show
 import Data.GADT.Show.TH
-import Language.Haskell.TH
+
+data MySum :: * -> * where
+  MySum_Int :: MySum Int
+  MySum_String :: MySum String
+
+deriving instance Show (MySum a)
+
+deriveGShow ''MySum
+deriveGEq ''MySum
+deriveGCompare ''MySum
+
+main :: IO ()
+main = do
+  guard $ show MySum_Int == gshow MySum_Int
+  guard $ show MySum_String == gshow MySum_String
+  guard $ (MySum_Int `geq` MySum_Int) == Just Refl
+  guard $ (MySum_Int `gcompare` MySum_Int) == GEQ
+  guard $ (MySum_String `geq` MySum_String) == Just Refl
+  guard $ (MySum_String `gcompare` MySum_String) == GEQ
+  guard $ (MySum_Int `gcompare` MySum_String) == GLT
+  guard $ (MySum_String `gcompare` MySum_Int) == GGT
+  return ()
+
+--TODO: Figure out how to best use these test cases; just checking that they
+-- compile is useful, but it's probably more useful to check some properties as
+-- well
 
 -- test cases: should be able to generate instances for these
 -- (Bar requiring the existence of an instance for Foo)
@@ -78,7 +99,7 @@ instance GEq Splort where
 deriving instance Show a => Show (Splort a)
 
 instance GCompare Splort where
-    gcompare (Splort (E x1) x2) (Splort (E y1) y2) = 
+    gcompare (Splort (E x1) x2) (Splort (E y1) y2) =
         runGComparing $ do
             Refl <- geq' x1 y1
             compare' x2 y2
@@ -93,18 +114,18 @@ deriveGCompare ''Empty
 -- ([t||] brackets won't work because they can only quote types of kind *).
 data Spleeb a b where
     P :: a Double -> Qux b -> Spleeb a b
--- need a cleaner 'one-shot' way of defining these - the empty instances need to appear 
+-- need a cleaner 'one-shot' way of defining these - the empty instances need to appear
 -- in the same quotation because the GEq context of the GCompare class causes stage
 -- restriction errors... seems like GHC shouldn't actually check things like that till
 -- the final splice, but whatever.
 do
-    [geqInst, gcompareInst, gshowInst] <- 
+    [geqInst, gcompareInst, gshowInst] <-
         [d|
             instance GEq a => GEq (Spleeb a)
             instance GCompare a => GCompare (Spleeb a)
             instance Show (a Double) => GShow (Spleeb a)
           |]
-    
+
     concat <$> sequence
         [ deriveGEq      geqInst
         , deriveGCompare gcompareInst
@@ -118,11 +139,11 @@ do
     decs <- [d|
         data Fnord a where Yarr :: Fnord Double; Grr :: Fnord (Int -> String)
      |]
-    
+
     geqInst         <- deriveGEq      decs
     gcompareInst    <- deriveGCompare decs
     gshowInst       <- deriveGShow    decs
-    
+
     return $ concat
         [ decs
         , geqInst
@@ -131,41 +152,3 @@ do
         ]
 
 instance Show (Fnord a) where showsPrec = gshowsPrec
-
--- also should handle data families:
-data family Squawk (f :: * -> *) :: * -> *
-
--- data instance Squawk Maybe t where 
---     Blotto  :: Maybe Int -> Squawk Maybe String
---     Flubbet ::              Squawk Maybe (Maybe Int)
-
-do
-    -- [d|
-    --     data instance Squawk Maybe t where 
-    --         Blotto  :: Maybe Int -> Squawk Maybe String
-    --         Flubbet ::              Squawk Maybe (Maybe Int)
-    --  |]
-    
-    dec <- dataInstD
-        (return [])
-        ''Squawk
-        [ conT ''Maybe, varT (mkName "t")]
-        [ ForallC [] [EqualP (VarT (mkName "t")) (ConT ''String)] 
-            <$> normalC (mkName "Blotto") [strictType notStrict [t| Maybe Int |]] 
-        , ForallC [] [EqualP (VarT (mkName "t")) (AppT (ConT ''Maybe) (ConT ''Int))] 
-            <$> normalC (mkName "Flubbet") [] 
-        ]
-        []
-    
-    geqInst         <- deriveGEq      dec
-    gcompareInst    <- deriveGCompare dec
-    gshowInst       <- deriveGShow    dec
-    
-    return $ 
-        dec : concat
-            [ geqInst
-            , gcompareInst
-            , gshowInst
-            ]
-
-instance Show (Squawk Maybe t) where showsPrec = gshowsPrec
