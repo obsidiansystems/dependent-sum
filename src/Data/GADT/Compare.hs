@@ -22,6 +22,11 @@ import Data.Maybe
 import Data.GADT.Show
 import Data.Typeable
 
+#if MIN_VERSION_base(4,10,0)
+import qualified Type.Reflection as TR
+import Data.Type.Equality (testEquality)
+#endif
+
 #if MIN_VERSION_base(4,7,0)
 -- |Backwards compatibility alias; as of GHC 7.8, this is the same as `(:~:)`.
 type (:=) = (:~:)
@@ -92,6 +97,11 @@ defaultNeq x y = isNothing (geq x y)
 
 instance GEq ((:=) a) where
     geq (Refl :: a := b) (Refl :: a := c) = Just (Refl :: b := c)
+
+#if MIN_VERSION_base(4,10,0)
+instance GEq TR.TypeRep where
+    geq = testEquality
+#endif
 
 -- This instance seems nice, but it's simply not right:
 -- 
@@ -166,6 +176,20 @@ class GEq f => GCompare f where
 
 instance GCompare ((:=) a) where
     gcompare Refl Refl = GEQ
+
+#if MIN_VERSION_base(4,10,0)
+instance GCompare TR.TypeRep where
+    gcompare t1 t2 =
+      case testEquality t1 t2 of
+        Just Refl -> GEQ
+        Nothing ->
+          case compare (TR.SomeTypeRep t1) (TR.SomeTypeRep t2) of
+            LT -> GLT
+            GT -> GGT
+            EQ -> error "impossible: 'testEquality' and 'compare' \
+                        \are inconsistent for TypeRep; report this \
+                        \as a GHC bug"
+#endif
 
 defaultCompare :: GCompare f => f a -> f b -> Ordering
 defaultCompare x y = weakenOrdering (gcompare x y)
