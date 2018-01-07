@@ -8,6 +8,10 @@
 #endif
 module Data.GADT.Show where
 
+#if MIN_VERSION_base(4,10,0)
+import qualified Type.Reflection as TR
+#endif
+
 -- |'Show'-like class for 1-type-parameter GADTs.  @GShow t => ...@ is equivalent to something
 -- like @(forall a. Show (t a)) => ...@.  The easiest way to create instances would probably be
 -- to write (or derive) an @instance Show (T a)@, and then simply say:
@@ -16,6 +20,11 @@ module Data.GADT.Show where
 class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
 
+
+#if MIN_VERSION_base(4,10,0)
+instance GShow TR.TypeRep where
+    gshowsPrec = showsPrec
+#endif
 
 gshows :: GShow t => t a -> ShowS
 gshows = gshowsPrec (-1)
