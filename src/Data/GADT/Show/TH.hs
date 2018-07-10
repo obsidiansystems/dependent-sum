@@ -79,8 +79,12 @@ gshowClause con = do
         precName = mkName "p"
     
     argNames <- replicateM nArgs (newName "x")
-    
-    clause [varP precName, conP conName (map varP argNames)]
+
+    let precPat = if null argNames
+          then wildP
+          else varP precName
+
+    clause [precPat, conP conName (map varP argNames)]
         (normalB (gshowBody (varE precName) conName argNames)) []
 
 showsName name = [| showString $(litE . stringL $ nameBase name) |]
