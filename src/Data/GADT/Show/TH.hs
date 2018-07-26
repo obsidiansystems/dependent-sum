@@ -75,9 +75,9 @@ gshowClause con = do
     let conName  = nameOfCon con
         argTypes = argTypesOfCon con
         nArgs    = length argTypes
-        
+
         precName = mkName "p"
-    
+
     argNames <- replicateM nArgs (newName "x")
 
     let precPat = if null argNames
@@ -90,11 +90,11 @@ gshowClause con = do
 showsName name = [| showString $(litE . stringL $ nameBase name) |]
 
 gshowBody prec conName [] = showsName conName
-gshowBody prec conName argNames = 
+gshowBody prec conName argNames =
     [| showParen ($prec > 10) $( composeExprs $ intersperse [| showChar ' ' |]
         ( showsName conName
         : [ [| showsPrec 11 $arg |]
           | argName <- argNames, let arg = varE argName
           ]
-        )) 
+        ))
      |]
