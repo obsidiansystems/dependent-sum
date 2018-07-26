@@ -1,6 +1,7 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TemplateHaskell #-}
 import Control.Monad
@@ -20,6 +21,7 @@ deriving instance Show (MySum a)
 deriveGShow ''MySum
 deriveGEq ''MySum
 deriveGCompare ''MySum
+deriveEqTagIdentity ''MySum
 
 main :: IO ()
 main = do
@@ -31,6 +33,10 @@ main = do
   guard $ (MySum_String `gcompare` MySum_String) == GEQ
   guard $ (MySum_Int `gcompare` MySum_String) == GLT
   guard $ (MySum_String `gcompare` MySum_Int) == GGT
+  guard $ (eqTagged MySum_Int MySum_Int (Identity 1) (Identity 1)) == True
+  guard $ (eqTagged MySum_Int MySum_Int (Identity 1) (Identity 2)) == False
+  guard $ (eqTagged MySum_String MySum_String (Identity "a") (Identity "a")) == True
+  guard $ (eqTagged MySum_String MySum_String (Identity "a") (Identity "b")) == False
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they

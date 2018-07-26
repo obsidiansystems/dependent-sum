@@ -9,12 +9,15 @@
 module Data.GADT.Compare.TH
     ( DeriveGEQ(..)
     , DeriveGCompare(..)
+    , DeriveEqTagIdentity (..)
     , GComparing, runGComparing, geq', compare'
     ) where
 
 import Control.Applicative
 import Control.Monad
+import Data.Dependent.Sum
 import Data.Dependent.Sum.TH.Internal
+import Data.Functor.Identity
 import Data.GADT.Compare
 import Language.Haskell.TH
 import Language.Haskell.TH.Extras
@@ -158,3 +161,37 @@ gcompareFunction boundVars cons
                         )
                     |]
                 ) []
+
+-- A type class purely for overloading purposes
+class DeriveEqTagIdentity t where
+    deriveEqTagIdentity :: t -> Q [Dec]
+
+instance DeriveEqTagIdentity Name where
+    deriveEqTagIdentity typeName = do
+        typeInfo <- reify typeName
+        case typeInfo of
+            TyConI dec -> deriveEqTagIdentity dec
+            _ -> fail "deriveEqTagIdentity: the name of a type constructor is required"
+
+instance DeriveEqTagIdentity Dec where
+    deriveEqTagIdentity = deriveForDec ''EqTag (\t -> [t| EqTag $t Identity |]) eqTaggedFunction
+
+instance DeriveEqTagIdentity t => DeriveEqTagIdentity [t] where
+    deriveEqTagIdentity [it] = deriveEqTagIdentity it
+    deriveEqTagIdentity _ = fail "deriveEqTagIdentity: [] instance only applies to single-element lists"
+
+instance DeriveEqTagIdentity t => DeriveEqTagIdentity (Q t) where
+    deriveEqTagIdentity = (>>= deriveEqTagIdentity)
+
+eqTaggedFunction bndrs cons = funD 'eqTagged $
+    map (eqTaggedClause bndrs) cons
+
+eqTaggedClause bndrs con = do
+    let argTypes = argTypesOfCon con
+
+    clause [ conP conName (wildP <$ argTypes)
+           , wildP
+           ]
+        ( normalB [| (==) |]
+        ) []
+    where conName = nameOfCon con
