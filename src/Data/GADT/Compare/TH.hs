@@ -9,8 +9,8 @@
 module Data.GADT.Compare.TH
     ( DeriveGEQ(..)
     , DeriveGCompare(..)
-    , DeriveEqTagIdentity (..)
-    , DeriveOrdTagIdentity (..)
+    , DeriveEqTagIdentity(..)
+    , DeriveOrdTagIdentity(..)
     , GComparing, runGComparing, geq', compare'
     ) where
 
