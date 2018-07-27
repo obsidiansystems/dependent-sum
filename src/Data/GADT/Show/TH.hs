@@ -76,7 +76,7 @@ instance DeriveShowTagIdentity Name where
             _ -> fail "deriveShowTagIdentity: the name of a type constructor is required"
 
 instance DeriveShowTagIdentity Dec where
-    deriveShowTagIdentity = deriveForDec ''ShowTag (\t -> [t| ShowTag $t Identity |]) compareTaggedFunction
+    deriveShowTagIdentity = deriveForDec ''ShowTag (\t -> [t| ShowTag $t Identity |]) showTaggedFunction
 
 instance DeriveShowTagIdentity t => DeriveShowTagIdentity [t] where
     deriveShowTagIdentity [it] = deriveShowTagIdentity it
@@ -85,10 +85,10 @@ instance DeriveShowTagIdentity t => DeriveShowTagIdentity [t] where
 instance DeriveShowTagIdentity t => DeriveShowTagIdentity (Q t) where
     deriveShowTagIdentity = (>>= deriveShowTagIdentity)
 
-compareTaggedFunction bndrs cons = funD 'showTaggedPrec $
-    map (compareTaggedClause bndrs) cons
+showTaggedFunction bndrs cons = funD 'showTaggedPrec $
+    map (showTaggedClause bndrs) cons
 
-compareTaggedClause bndrs con = do
+showTaggedClause bndrs con = do
     let argTypes = argTypesOfCon con
 
     clause [ conP conName (wildP <$ argTypes)
