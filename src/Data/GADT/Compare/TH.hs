@@ -10,6 +10,7 @@ module Data.GADT.Compare.TH
     ( DeriveGEQ(..)
     , DeriveGCompare(..)
     , DeriveEqTagIdentity (..)
+    , DeriveOrdTagIdentity (..)
     , GComparing, runGComparing, geq', compare'
     ) where
 
@@ -193,5 +194,39 @@ eqTaggedClause bndrs con = do
            , wildP
            ]
         ( normalB [| (==) |]
+        ) []
+    where conName = nameOfCon con
+
+-- A type class purely for overloading purposes
+class DeriveOrdTagIdentity t where
+    deriveOrdTagIdentity :: t -> Q [Dec]
+
+instance DeriveOrdTagIdentity Name where
+    deriveOrdTagIdentity typeName = do
+        typeInfo <- reify typeName
+        case typeInfo of
+            TyConI dec -> deriveOrdTagIdentity dec
+            _ -> fail "deriveOrdTagIdentity: the name of a type constructor is required"
+
+instance DeriveOrdTagIdentity Dec where
+    deriveOrdTagIdentity = deriveForDec ''OrdTag (\t -> [t| OrdTag $t Identity |]) compareTaggedFunction
+
+instance DeriveOrdTagIdentity t => DeriveOrdTagIdentity [t] where
+    deriveOrdTagIdentity [it] = deriveOrdTagIdentity it
+    deriveOrdTagIdentity _ = fail "deriveOrdTagIdentity: [] instance only applies to single-element lists"
+
+instance DeriveOrdTagIdentity t => DeriveOrdTagIdentity (Q t) where
+    deriveOrdTagIdentity = (>>= deriveOrdTagIdentity)
+
+compareTaggedFunction bndrs cons = funD 'compareTagged $
+    map (compareTaggedClause bndrs) cons
+
+compareTaggedClause bndrs con = do
+    let argTypes = argTypesOfCon con
+
+    clause [ conP conName (wildP <$ argTypes)
+           , wildP
+           ]
+        ( normalB [| compare |]
         ) []
     where conName = nameOfCon con
