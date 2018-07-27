@@ -1,11 +1,14 @@
 {-# LANGUAGE CPP, TemplateHaskell #-}
 module Data.GADT.Show.TH
     ( DeriveGShow(..)
+    , DeriveShowTagIdentity(..)
     ) where
 
 import Control.Applicative
 import Control.Monad
+import Data.Dependent.Sum
 import Data.Dependent.Sum.TH.Internal
+import Data.Functor.Identity
 import Data.GADT.Show
 import Data.List
 import Language.Haskell.TH
@@ -60,3 +63,36 @@ gshowBody prec conName argNames =
           ]
         ))
      |]
+
+-- A type class purely for overloading purposes
+class DeriveShowTagIdentity t where
+    deriveShowTagIdentity :: t -> Q [Dec]
+
+instance DeriveShowTagIdentity Name where
+    deriveShowTagIdentity typeName = do
+        typeInfo <- reify typeName
+        case typeInfo of
+            TyConI dec -> deriveShowTagIdentity dec
+            _ -> fail "deriveShowTagIdentity: the name of a type constructor is required"
+
+instance DeriveShowTagIdentity Dec where
+    deriveShowTagIdentity = deriveForDec ''ShowTag (\t -> [t| ShowTag $t Identity |]) compareTaggedFunction
+
+instance DeriveShowTagIdentity t => DeriveShowTagIdentity [t] where
+    deriveShowTagIdentity [it] = deriveShowTagIdentity it
+    deriveShowTagIdentity _ = fail "deriveShowTagIdentity: [] instance only applies to single-element lists"
+
+instance DeriveShowTagIdentity t => DeriveShowTagIdentity (Q t) where
+    deriveShowTagIdentity = (>>= deriveShowTagIdentity)
+
+compareTaggedFunction bndrs cons = funD 'showTaggedPrec $
+    map (compareTaggedClause bndrs) cons
+
+compareTaggedClause bndrs con = do
+    let argTypes = argTypesOfCon con
+
+    clause [ conP conName (wildP <$ argTypes)
+           ]
+        ( normalB [| showsPrec |]
+        ) []
+    where conName = nameOfCon con

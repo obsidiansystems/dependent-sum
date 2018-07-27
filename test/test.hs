@@ -23,6 +23,7 @@ deriveGEq ''MySum
 deriveGCompare ''MySum
 deriveEqTagIdentity ''MySum
 deriveOrdTagIdentity ''MySum
+deriveShowTagIdentity ''MySum
 
 main :: IO ()
 main = do
@@ -44,6 +45,8 @@ main = do
   guard $ (compareTagged MySum_String MySum_String (Identity "a") (Identity "b")) == LT
   guard $ (compareTagged MySum_String MySum_String (Identity "a") (Identity "a")) == EQ
   guard $ (compareTagged MySum_String MySum_String (Identity "b") (Identity "a")) == GT
+  guard $ (showTaggedPrec MySum_Int 0 (Identity 1) "") == "Identity 1"
+  guard $ (showTaggedPrec MySum_String 0 (Identity "a") "") == "Identity \"a\""
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they
