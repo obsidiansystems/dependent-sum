@@ -48,6 +48,7 @@ Library
   if impl(ghc < 7.8)
     other-modules:      Data.Dependent.Sum.Typeable
   
-  build-depends:        base >= 3 && <5
+  build-depends:        base >= 3 && <5,
+                        universe >= 1 && < 2
   if impl(ghc >= 7.2)
     ghc-options:        -trust base

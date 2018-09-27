@@ -1,9 +1,8 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
-#endif
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
 #endif
@@ -12,6 +11,8 @@ module Data.Some where
 import Data.GADT.Show
 import Data.GADT.Compare
 import Data.Maybe
+import Data.Universe
+import Data.Functor.Sum
 
 data Some tag where
     This :: !(tag t) -> Some tag
@@ -38,3 +39,9 @@ instance GEq tag => Eq (Some tag) where
 
 instance GCompare tag => Ord (Some tag) where
     compare (This x) (This y) = defaultCompare x y
+
+mapSome :: (forall t. f t -> g t) -> Some f -> Some g
+mapSome f (This x) = This (f x)
+
+instance (Universe (Some a), Universe (Some b)) => Universe (Some (Sum a b)) where
+  universe = fmap (mapSome InL) universe ++ fmap (mapSome InR) universe
