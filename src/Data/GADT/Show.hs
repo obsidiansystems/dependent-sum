@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
@@ -7,6 +8,9 @@
 {-# LANGUAGE PolyKinds #-}
 #endif
 module Data.GADT.Show where
+
+import Data.Functor.Sum
+import Data.Functor.Product
 
 #if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
@@ -54,3 +58,23 @@ gread s g = case hd [f | (f, "") <- greads s] of
     where
         hd (x:_) = x
         hd _ = error "gread: no parse"
+
+instance (GShow a, GShow b) => GShow (Sum a b) where
+  gshowsPrec d = \case
+    InL x -> showParen (d > 10) (showString "InL " . gshowsPrec 11 x)
+    InR x -> showParen (d > 10) (showString "InR " . gshowsPrec 11 x)
+
+instance (GRead a, GRead b) => GRead (Sum a b) where
+  greadsPrec d s = concat
+    [ readParen (d > 10)
+        (\s1 -> [ (GReadResult $ \k -> getGReadResult r (k . InL), t)
+                | ("InL", s2) <- lex s1
+                , (r, t) <- greadsPrec 11 s2 ]) s
+    , readParen (d > 10)
+        (\s1 -> [ (GReadResult $ \k -> getGReadResult r (k . InR), t)
+                | ("InR", s2) <- lex s1
+                , (r, t) <- greadsPrec 11 s2 ]) s
+    ]
+
+instance (GShow a, GShow b) => GShow (Product a b) where
+  gshowsPrec d (Pair x y) = showParen (d > 10) (showString "Pair " . gshowsPrec 11 x . gshowsPrec 11 y)
