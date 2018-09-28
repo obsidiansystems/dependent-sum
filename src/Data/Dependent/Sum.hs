@@ -82,7 +82,11 @@ k ==> v = k :=> pure v
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+class GShow tag => ShowTag (tag :: k -> *) (f :: k -> *) where
+#else
 class GShow tag => ShowTag tag f where
+#endif
     -- |Given a value of type @tag a@, return the 'showsPrec' function for 
     -- the type @f a@.
     showTaggedPrec :: tag a -> Int -> f a -> ShowS
