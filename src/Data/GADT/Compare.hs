@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies, FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 {-# LANGUAGE CPP #-}
@@ -21,6 +22,8 @@ module Data.GADT.Compare
 import Data.Maybe
 import Data.GADT.Show
 import Data.Typeable
+import Data.Functor.Sum
+import Data.Functor.Product
 
 #if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
@@ -193,3 +196,29 @@ instance GCompare TR.TypeRep where
 
 defaultCompare :: GCompare f => f a -> f b -> Ordering
 defaultCompare x y = weakenOrdering (gcompare x y)
+
+instance (GEq a, GEq b) => GEq (Sum a b) where
+  geq (InL x) (InL y) = geq x y
+  geq (InR x) (InR y) = geq x y
+  geq _ _ = Nothing
+
+instance (GEq a, GEq b) => GEq (Product a b) where
+  geq (Pair x y) (Pair x' y')
+    | Just Refl <- geq x x', Just Refl <- geq y y' = Just Refl
+    | otherwise = Nothing  
+
+instance (GCompare a, GCompare b) => GCompare (Sum a b) where
+  gcompare (InL x) (InL y) = gcompare x y
+  gcompare (InL _) (InR _) = GLT
+  gcompare (InR _) (InL _) = GGT
+  gcompare (InR x) (InR y) = gcompare x y
+
+instance (GCompare a, GCompare b) => GCompare (Product a b) where
+  gcompare (Pair x y) (Pair x' y') =
+    case gcompare x x' of
+      GLT -> GLT
+      GGT -> GGT
+      GEQ -> case gcompare y y' of
+        GLT -> GLT
+        GGT -> GGT
+        GEQ -> GEQ
