@@ -10,6 +10,7 @@ import Data.Dependent.Sum
 import Data.Dependent.Sum.TH.Internal
 import Data.Functor.Identity
 import Data.GADT.Show
+import Data.Traversable (for)
 import Data.List
 import Language.Haskell.TH
 import Language.Haskell.TH.Extras
@@ -90,9 +91,23 @@ showTaggedFunction bndrs cons = funD 'showTaggedPrec $
 
 showTaggedClause bndrs con = do
     let argTypes = argTypesOfCon con
+        needsGShow argType = any ((`occursInType` argType) . nameOfBinder) (bndrs ++ varsBoundInCon con)
 
-    clause [ conP conName (wildP <$ argTypes)
+    argVars <- for argTypes $ \argType ->
+        if needsGShow argType
+        then Just <$> newName "x"
+        else pure Nothing
+
+    let nonWildPs = [x | Just x <- argVars]
+        doRecur = case nonWildPs of
+            [] -> Nothing
+            [var] -> Just var
+            (_:_) -> error "deriveShowTagIdentity: Can have at most one nested GADT"
+
+    clause [ conP conName (maybe wildP varP <$> argVars)
            ]
-        ( normalB [| showsPrec |]
+        ( normalB $ case doRecur of
+            Nothing -> [| showsPrec |]
+            Just x -> [| showTaggedPrec $(varE x) |]
         ) []
     where conName = nameOfCon con

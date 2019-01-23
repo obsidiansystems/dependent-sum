@@ -20,6 +20,7 @@ import Data.Dependent.Sum
 import Data.Dependent.Sum.TH.Internal
 import Data.Functor.Identity
 import Data.GADT.Compare
+import Data.Traversable (for)
 import Language.Haskell.TH
 import Language.Haskell.TH.Extras
 
@@ -189,11 +190,25 @@ eqTaggedFunction bndrs cons = funD 'eqTagged $
 
 eqTaggedClause bndrs con = do
     let argTypes = argTypesOfCon con
+        needsGEq argType = any ((`occursInType` argType) . nameOfBinder) (bndrs ++ varsBoundInCon con)
 
-    clause [ conP conName (wildP <$ argTypes)
-           , wildP
+    argVars <- for argTypes $ \argType ->
+        if needsGEq argType
+        then Just <$> liftA2 (,) (newName "x") (newName "y")
+        else pure Nothing
+
+    let nonWildPs = [x | Just x <- argVars]
+        doRecur = case nonWildPs of
+            [] -> Nothing
+            [var] -> Just var
+            (_:_) -> error "deriveEqTagIdentity: Can have at most one nested GADT"
+
+    clause [ conP conName (maybe wildP (varP . fst) <$> argVars)
+           , conP conName (maybe wildP (varP . snd) <$> argVars)
            ]
-        ( normalB [| (==) |]
+        ( normalB $ case doRecur of
+            Nothing -> [| (==) |]
+            Just (x, y) -> [| eqTagged $(varE x) $(varE y) |]
         ) []
     where conName = nameOfCon con
 
@@ -223,10 +238,24 @@ compareTaggedFunction bndrs cons = funD 'compareTagged $
 
 compareTaggedClause bndrs con = do
     let argTypes = argTypesOfCon con
+        needsGCompare argType = any ((`occursInType` argType) . nameOfBinder) (bndrs ++ varsBoundInCon con)
 
-    clause [ conP conName (wildP <$ argTypes)
-           , wildP
+    argVars <- for argTypes $ \argType ->
+        if needsGCompare argType
+        then Just <$> liftA2 (,) (newName "x") (newName "y")
+        else pure Nothing
+
+    let nonWildPs = [x | Just x <- argVars]
+        doRecur = case nonWildPs of
+            [] -> Nothing
+            [var] -> Just var
+            (_:_) -> error "deriveOrdTagIdentity: Can have at most one nested GADT"
+
+    clause [ conP conName (maybe wildP (varP . fst) <$> argVars)
+           , conP conName (maybe wildP (varP . snd) <$> argVars)
            ]
-        ( normalB [| compare |]
+        ( normalB $ case doRecur of
+            Nothing -> [| compare |]
+            Just (x, y) -> [| compareTagged $(varE x) $(varE y) |]
         ) []
     where conName = nameOfCon con
