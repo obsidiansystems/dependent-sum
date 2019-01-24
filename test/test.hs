@@ -1,8 +1,11 @@
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 import Control.Monad
 import Data.Dependent.Sum
@@ -16,6 +19,8 @@ data MySum :: * -> * where
   MySum_Int :: MySum Int
   MySum_String :: MySum String
 
+deriving instance Eq (MySum a)
+deriving instance Ord (MySum a)
 deriving instance Show (MySum a)
 
 deriveGShow ''MySum
@@ -25,28 +30,57 @@ deriveEqTagIdentity ''MySum
 deriveOrdTagIdentity ''MySum
 deriveShowTagIdentity ''MySum
 
+data MyNestedSum :: * -> * where
+  MyNestedSum_MySum :: MySum a -> MyNestedSum a
+  MyNestedSum_Int :: Int -> MyNestedSum Int
+  MyNestedSum_String :: [Int] -> MyNestedSum String
+
+deriving instance Eq (MyNestedSum a)
+deriving instance Ord (MyNestedSum a)
+deriving instance Show (MyNestedSum a)
+
+deriveGShow ''MyNestedSum
+deriveGEq ''MyNestedSum
+deriveGCompare ''MyNestedSum
+deriveEqTagIdentity ''MyNestedSum
+deriveOrdTagIdentity ''MyNestedSum
+deriveShowTagIdentity ''MyNestedSum
+
+polyTests
+  :: forall m f
+  .  ( MonadPlus m, Show (f Int), Show (f String)
+     , GCompare f, OrdTag f Identity, ShowTag f Identity)
+  => (forall a. MySum a -> f a)
+  -> m ()
+polyTests f = do
+  do
+    let showSame :: forall a. Show (f a) => f a -> Bool
+        showSame gadt = show gadt == gshow gadt
+    guard $ showSame $ f MySum_Int
+    guard $ showSame $ f MySum_String
+  guard $ (f MySum_Int `geq` f MySum_Int) == Just Refl
+  guard $ (f MySum_Int `gcompare` f MySum_Int) == GEQ
+  guard $ (f MySum_String `geq` f MySum_String) == Just Refl
+  guard $ (f MySum_String `gcompare` f MySum_String) == GEQ
+  guard $ (f MySum_Int `gcompare` f MySum_String) == GLT
+  guard $ (f MySum_String `gcompare` f MySum_Int) == GGT
+  guard $ eqTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 1) == True
+  guard $ eqTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 2) == False
+  guard $ eqTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "a") == True
+  guard $ eqTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "b") == False
+  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 2) == LT
+  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 1) == EQ
+  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 2) (Identity 1) == GT
+  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "b") == LT
+  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "a") == EQ
+  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "b") (Identity "a") == GT
+  guard $ showTaggedPrec (f MySum_Int) 0 (Identity 1) "" == "Identity 1"
+  guard $ showTaggedPrec (f MySum_String) 0 (Identity "a") "" == "Identity \"a\""
+
 main :: IO ()
 main = do
-  guard $ show MySum_Int == gshow MySum_Int
-  guard $ show MySum_String == gshow MySum_String
-  guard $ (MySum_Int `geq` MySum_Int) == Just Refl
-  guard $ (MySum_Int `gcompare` MySum_Int) == GEQ
-  guard $ (MySum_String `geq` MySum_String) == Just Refl
-  guard $ (MySum_String `gcompare` MySum_String) == GEQ
-  guard $ (MySum_Int `gcompare` MySum_String) == GLT
-  guard $ (MySum_String `gcompare` MySum_Int) == GGT
-  guard $ (eqTagged MySum_Int MySum_Int (Identity 1) (Identity 1)) == True
-  guard $ (eqTagged MySum_Int MySum_Int (Identity 1) (Identity 2)) == False
-  guard $ (eqTagged MySum_String MySum_String (Identity "a") (Identity "a")) == True
-  guard $ (eqTagged MySum_String MySum_String (Identity "a") (Identity "b")) == False
-  guard $ (compareTagged MySum_Int MySum_Int (Identity 1) (Identity 2)) == LT
-  guard $ (compareTagged MySum_Int MySum_Int (Identity 1) (Identity 1)) == EQ
-  guard $ (compareTagged MySum_Int MySum_Int (Identity 2) (Identity 1)) == GT
-  guard $ (compareTagged MySum_String MySum_String (Identity "a") (Identity "b")) == LT
-  guard $ (compareTagged MySum_String MySum_String (Identity "a") (Identity "a")) == EQ
-  guard $ (compareTagged MySum_String MySum_String (Identity "b") (Identity "a")) == GT
-  guard $ (showTaggedPrec MySum_Int 0 (Identity 1) "") == "Identity 1"
-  guard $ (showTaggedPrec MySum_String 0 (Identity "a") "") == "Identity \"a\""
+  polyTests id
+  polyTests MyNestedSum_MySum
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they
