@@ -3,9 +3,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeOperators #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
-#endif
 module Data.GADT.Compare.TH
     ( DeriveGEQ(..)
     , DeriveGCompare(..)
@@ -21,6 +19,7 @@ import Data.Dependent.Sum.TH.Internal
 import Data.Functor.Identity
 import Data.GADT.Compare
 import Data.Traversable (for)
+import Data.Type.Equality ((:~:) (..))
 import Language.Haskell.TH
 import Language.Haskell.TH.Extras
 
@@ -86,7 +85,7 @@ instance Applicative (GComparing a b) where
     pure = return
     (<*>) = ap
 
-geq' :: GCompare t => t a -> t b -> GComparing x y (a := b)
+geq' :: GCompare t => t a -> t b -> GComparing x y (a :~: b)
 geq' x y = GComparing (case gcompare x y of
     GLT -> Left GLT
     GEQ -> Right Refl

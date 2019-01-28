@@ -24,13 +24,7 @@ description:            A dependent sum is a generalization of a
                         dependent sum types by using your own \"tag\"
                         types.
 
-tested-with:            GHC == 7.0.4,
-                        GHC == 7.2.2,
-                        GHC == 7.4.2,
-                        GHC == 7.6.3,
-                        GHC == 7.8.4,
-                        GHC == 7.10.3,
-                        GHC == 8.0.2,
+tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
                         GHC == 8.4.4,
                         GHC == 8.6.3
@@ -48,10 +42,5 @@ Library
                         Data.GADT.Show
                         Data.Some
   
-  if impl(ghc < 7.8)
-    other-modules:      Data.Dependent.Sum.Typeable
-  
-  build-depends:        base >= 3 && <5,
-                        universe >= 1 && < 2
-  if impl(ghc >= 7.2)
-    ghc-options:        -trust base
+  build-depends:        base >= 3 && <5
+                      , universe >= 1 && < 2

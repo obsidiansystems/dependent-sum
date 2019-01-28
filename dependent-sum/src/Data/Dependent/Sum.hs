@@ -6,21 +6,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
-#endif
 module Data.Dependent.Sum where
 
 import Control.Applicative
 
-#if MIN_VERSION_base(4,7,0)
+import Data.Type.Equality ((:~:) (..))
 import Data.Typeable (Typeable)
-#else
-import Data.Dependent.Sum.Typeable ({- instance Typeable ... -})
-#endif
 
 import Data.GADT.Show
 import Data.GADT.Compare
@@ -55,9 +48,7 @@ import Data.Maybe (fromMaybe)
 -- @DSum Identity Tag@.  Its precedence is just above that of '$', so
 -- @foo bar $ AString ==> "eep"@ is equivalent to @foo bar (AString ==> "eep")@.
 data DSum tag f = forall a. !(tag a) :=> f a
-#if MIN_VERSION_base(4,7,0)
     deriving Typeable
-#endif
 infixr 1 :=>, ==>
 
 (==>) :: Applicative f => tag a -> a -> DSum tag f
@@ -82,16 +73,12 @@ k ==> v = k :=> pure v
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 class GShow tag => ShowTag (tag :: k -> *) (f :: k -> *) where
-#else
-class GShow tag => ShowTag tag f where
-#endif
     -- |Given a value of type @tag a@, return the 'showsPrec' function for 
     -- the type @f a@.
     showTaggedPrec :: tag a -> Int -> f a -> ShowS
 
-instance Show (f a) => ShowTag ((:=) a) f where
+instance Show (f a) => ShowTag ((:~:) a) f where
     showTaggedPrec Refl = showsPrec
 
 -- This instance is questionable.  It works, but is pretty useless.
@@ -134,7 +121,7 @@ class GRead tag => ReadTag tag f where
 -- >     readTaggedPrec AString = readsPrec
 -- >     readTaggedPrec AnInt   = readsPrec
 -- 
-instance Read (f a) => ReadTag ((:=) a) f where
+instance Read (f a) => ReadTag ((:~:) a) f where
     readTaggedPrec Refl = readsPrec
 
 -- This instance is questionable.  It works, but is partial (and is also pretty useless)
@@ -180,7 +167,7 @@ class GEq tag => EqTag tag f where
     -- return the '==' function for the type @f a@.
     eqTagged :: tag a -> tag a -> f a -> f a -> Bool
 
-instance Eq (f a) => EqTag ((:=) a) f where
+instance Eq (f a) => EqTag ((:~:) a) f where
     eqTagged Refl Refl = (==)
 
 instance EqTag tag f => Eq (DSum tag f) where
@@ -210,7 +197,7 @@ class (EqTag tag f, GCompare tag) => OrdTag tag f where
     -- return the 'compare' function for the type @f a@.
     compareTagged :: tag a -> tag a -> f a -> f a -> Ordering
 
-instance Ord (f a) => OrdTag ((:=) a) f where
+instance Ord (f a) => OrdTag ((:~:) a) f where
     compareTagged Refl Refl = compare
 
 instance OrdTag tag f => Ord (DSum tag f) where

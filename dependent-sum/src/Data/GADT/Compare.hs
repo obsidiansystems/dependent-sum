@@ -4,67 +4,36 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
-#endif
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Data.GADT.Compare
     ( module Data.GADT.Compare
-#if MIN_VERSION_base(4,7,0)
     , (:~:)(Refl)
-#endif
     ) where
 
 import Data.Maybe
 import Data.GADT.Show
+import Data.Type.Equality ((:~:) (..))
 import Data.Typeable
 import Data.Functor.Sum
 import Data.Functor.Product
 
-#if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
 import Data.Type.Equality (testEquality)
-#endif
 
-#if MIN_VERSION_base(4,7,0)
 -- |Backwards compatibility alias; as of GHC 7.8, this is the same as `(:~:)`.
+{-# DEPRECATED (:=) "use '(:~:)' from 'Data.Type,Equality'." #-}
 type (:=) = (:~:)
 
-#else
-
--- |A GADT witnessing equality of two types.  Its only inhabitant is 'Refl'.
-data a := b where
-    Refl :: a := a
-    deriving Typeable
-
-instance Eq (a := b) where
-    Refl == Refl = True
-
-instance Ord (a := b) where
-    compare Refl Refl = EQ
-
-instance Show (a := b) where
-    showsPrec _ Refl = showString "Refl"
-
-instance Read (a := a) where
-    readsPrec _ s = case con of
-        "Refl"  -> [(Refl, rest)]
-        _       -> []
-        where (con,rest) = splitAt 4 s
-
-#endif
-
-instance GShow ((:=) a) where
+instance GShow ((:~:) a) where
     gshowsPrec _ Refl = showString "Refl"
 
-instance GRead ((:=) a) where
+instance GRead ((:~:) a) where
     greadsPrec p s = readsPrec p s >>= f
         where
-            f :: forall x. (x := x, String) -> [(GReadResult ((:=) x), String)]
+            f :: forall x. (x :~: x, String) -> [(GReadResult ((:~:) x), String)]
             f (Refl, rest) = return (GReadResult (\x -> x Refl) , rest)
 
 -- |A class for type-contexts which contain enough information
@@ -86,7 +55,7 @@ class GEq f where
     -- > extractMany t1 things = [ x | (t2 :=> x) <- things, Refl <- maybeToList (geq t1 t2)]
     --
     -- (Making use of the 'DSum' type from "Data.Dependent.Sum" in both examples)
-    geq :: f a -> f b -> Maybe (a := b)
+    geq :: f a -> f b -> Maybe (a :~: b)
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default 
 -- implementation of '(==)'.
@@ -98,13 +67,11 @@ defaultEq x y = isJust (geq x y)
 defaultNeq :: GEq f => f a -> f b -> Bool
 defaultNeq x y = isNothing (geq x y)
 
-instance GEq ((:=) a) where
-    geq (Refl :: a := b) (Refl :: a := c) = Just (Refl :: b := c)
+instance GEq ((:~:) a) where
+    geq (Refl :: a :~: b) (Refl :: a :~: c) = Just (Refl :: b :~: c)
 
-#if MIN_VERSION_base(4,10,0)
 instance GEq TR.TypeRep where
     geq = testEquality
-#endif
 
 -- This instance seems nice, but it's simply not right:
 -- 
@@ -120,7 +87,7 @@ instance GEq TR.TypeRep where
 -- > y <- makeStableName id :: IO (StableName ((Int -> Int) -> Int -> Int))
 -- > 
 -- > let Just boom = geq x y
--- > let coerce :: (a := b) -> a -> b; coerce Refl = id
+-- > let coerce :: (a :~: b) -> a -> b; coerce Refl = id
 -- > 
 -- > coerce boom (const 0) id 0
 -- > let "Illegal Instruction" = "QED."
@@ -177,10 +144,9 @@ instance GRead (GOrdering a) where
 class GEq f => GCompare f where
     gcompare :: f a -> f b -> GOrdering a b
 
-instance GCompare ((:=) a) where
+instance GCompare ((:~:) a) where
     gcompare Refl Refl = GEQ
 
-#if MIN_VERSION_base(4,10,0)
 instance GCompare TR.TypeRep where
     gcompare t1 t2 =
       case testEquality t1 t2 of
@@ -192,7 +158,6 @@ instance GCompare TR.TypeRep where
             EQ -> error "impossible: 'testEquality' and 'compare' \
                         \are inconsistent for TypeRep; report this \
                         \as a GHC bug"
-#endif
 
 defaultCompare :: GCompare f => f a -> f b -> Ordering
 defaultCompare x y = weakenOrdering (gcompare x y)

@@ -14,13 +14,7 @@ category:               Unclassified
 synopsis:               Template Haskell code to generate instances of classes in dependent-sum package
 description:            Template Haskell code to generate instances of classes in dependent-sum package, such as 'GEq' and 'GCompare'.
 
-tested-with:            GHC == 7.0.4,
-                        GHC == 7.2.2,
-                        GHC == 7.4.2,
-                        GHC == 7.6.3,
-                        GHC == 7.8.4,
-                        GHC == 7.10.3,
-                        GHC == 8.0.2,
+tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
                         GHC == 8.4.4,
                         GHC == 8.6.3

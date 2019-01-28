@@ -1,20 +1,14 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Safe #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
-#endif
 module Data.GADT.Show where
 
 import Data.Functor.Sum
 import Data.Functor.Product
 
-#if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
-#endif
 
 -- |'Show'-like class for 1-type-parameter GADTs.  @GShow t => ...@ is equivalent to something
 -- like @(forall a. Show (t a)) => ...@.  The easiest way to create instances would probably be
@@ -25,10 +19,8 @@ class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
 
 
-#if MIN_VERSION_base(4,10,0)
 instance GShow TR.TypeRep where
     gshowsPrec = showsPrec
-#endif
 
 gshows :: GShow t => t a -> ShowS
 gshows = gshowsPrec (-1)
