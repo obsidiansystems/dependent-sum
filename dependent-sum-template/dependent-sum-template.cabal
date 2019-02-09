@@ -40,6 +40,8 @@ Library
                         th-extras >= 0.0.0.2
 
 test-suite test
+  if impl(ghc < 8.0)
+    buildable: False
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: test.hs
