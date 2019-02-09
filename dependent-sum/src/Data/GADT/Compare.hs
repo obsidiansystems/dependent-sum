@@ -1,9 +1,11 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs, TypeOperators, RankNTypes, TypeFamilies, FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
 {-# LANGUAGE PatternGuards #-}
+#endif
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# OPTIONS_GHC -fno-warn-deprecated-flags #-}
-{-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
 #endif
@@ -22,8 +24,10 @@ module Data.GADT.Compare
 import Data.Maybe
 import Data.GADT.Show
 import Data.Typeable
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
 import Data.Functor.Sum
 import Data.Functor.Product
+#endif
 
 #if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
@@ -197,6 +201,7 @@ instance GCompare TR.TypeRep where
 defaultCompare :: GCompare f => f a -> f b -> Ordering
 defaultCompare x y = weakenOrdering (gcompare x y)
 
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 800
 instance (GEq a, GEq b) => GEq (Sum a b) where
   geq (InL x) (InL y) = geq x y
   geq (InR x) (InR y) = geq x y
@@ -222,3 +227,4 @@ instance (GCompare a, GCompare b) => GCompare (Product a b) where
         GLT -> GLT
         GGT -> GGT
         GEQ -> GEQ
+#endif
