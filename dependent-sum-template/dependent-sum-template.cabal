@@ -24,6 +24,8 @@ source-repository head
   location: https://github.com/mokus0/dependent-sum-template
 
 Library
+  if impl(ghc < 7.10)
+    buildable: False
   hs-source-dirs:       src
   exposed-modules:      Data.GADT.Compare.TH
                         Data.GADT.Show.TH
