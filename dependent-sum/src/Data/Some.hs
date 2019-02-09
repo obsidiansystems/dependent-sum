@@ -1,7 +1,5 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
@@ -11,7 +9,6 @@ module Data.Some where
 import Data.GADT.Show
 import Data.GADT.Compare
 import Data.Maybe
-import Data.Functor.Sum
 
 data Some tag where
     This :: !(tag t) -> Some tag
