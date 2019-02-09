@@ -59,34 +59,32 @@ infixr 1 :=>, ==>
 (==>) :: Applicative f => tag a -> a -> DSum tag f
 k ==> v = k :=> pure v
 
-class f (g a) => ComposeC f g a
-
-instance forall tag f. (GShow tag, Has (ComposeC Show f) tag) => Show (DSum tag f) where
+instance forall tag f. (GShow tag, Has' Show tag f) => Show (DSum tag f) where
     showsPrec p (tag :=> value) = showParen (p >= 10)
         ( gshowsPrec 0 tag
         . showString " :=> "
-        . has @(ComposeC Show f) tag (showsPrec 1 value)
+        . has' @Show @f tag (showsPrec 1 value)
         )
 
-instance forall tag f. (GRead tag, Has (ComposeC Read f) tag) => Read (DSum tag f) where
+instance forall tag f. (GRead tag, Has' Read tag f) => Read (DSum tag f) where
     readsPrec p = readParen (p > 1) $ \s ->
         concat
             [ getGReadResult withTag $ \tag ->
                 [ (tag :=> val, rest'')
-                | (val, rest'') <- has @(ComposeC Read f) tag (readsPrec 1 rest')
+                | (val, rest'') <- has' @Read @f tag (readsPrec 1 rest')
                 ]
             | (withTag, rest) <- greadsPrec p s
             , let (con, rest') = splitAt 5 rest
             , con == " :=> "
             ]
 
-instance forall tag f. (GEq tag, Has (ComposeC Eq f) tag) => Eq (DSum tag f) where
+instance forall tag f. (GEq tag, Has' Eq tag f) => Eq (DSum tag f) where
     (t1 :=> x1) == (t2 :=> x2)  = fromMaybe False $ do
         Refl <- geq t1 t2
-        return $ has @(ComposeC Eq f) t1 (x1 == x2)
+        return $ has' @Eq @f t1 (x1 == x2)
 
-instance forall tag f. (GCompare tag, Has (ComposeC Eq f) tag, Has (ComposeC Ord f) tag) => Ord (DSum tag f) where
+instance forall tag f. (GCompare tag, Has' Eq tag f, Has' Ord tag f) => Ord (DSum tag f) where
     compare (t1 :=> x1) (t2 :=> x2)  = case gcompare t1 t2 of
         GLT -> LT
         GGT -> GT
-        GEQ -> has @(ComposeC Ord f) t1 (x1 `compare` x2)
+        GEQ -> has' @Ord @f t1 (x1 `compare` x2)
