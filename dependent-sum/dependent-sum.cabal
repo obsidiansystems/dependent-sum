@@ -43,5 +43,4 @@ Library
                         Data.Some
   
   build-depends:        base >= 3 && <5
-                      , universe >= 1 && < 2
                       , constraints-extras >= 0.2.3.0 && < 0.3

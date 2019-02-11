@@ -117,8 +117,9 @@ script:
   - cabal new-build -w ${HC} --disable-tests --disable-benchmarks all
 
   # build & run tests, build benchmarks
-  - cabal new-build -w ${HC} ${TEST} ${BENCH} all
-  - if [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} ${BENCH} all; fi
+  - cabal new-build -w ${HC} ${TEST} ${BENCH} $(if [ "x$BUILD_NO_TH" = "x1" ]; then echo dependent-sum; else echo all; fi)
+  # TODO write tests just for dependent-sum, without TH
+  - if [ "x$TEST_NO_TH" != "x1" ] && [ "x$TEST" = "x--enable-tests" ]; then cabal new-test -w ${HC} ${TEST} ${BENCH} all; fi
 
   # cabal check
   - (cd dependent-sum-* && cabal check)
