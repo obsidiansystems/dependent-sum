@@ -34,7 +34,7 @@ In order to support basic type classes from the `Prelude` for `DSum`, there are 
 In order to be able to compare values of type `DSum tag f` for equality, in addition to having a `GEq tag` instance, we need to know that, given a value `t :: tag a`, we may obtain an instance `Eq (f a)`, which is expressed by the use of the `Has' Eq tag f` constraint from the constraints-extras package, so we have the following instances:
 
     (GEq tag, Has' Eq tag f) => Eq (DSum tag f)
-    (GCompare tag, Has' Ord tag f) => Ord (DSum tag f)
+    (GCompare tag, Has' Eq tag f, Has' Ord tag f) => Ord (DSum tag f)
     (GShow tag, Has' Show tag f) => Show (DSum tag f)
     (GRead tag, Has' Read tag f) => Read (DSum tag f)
 
