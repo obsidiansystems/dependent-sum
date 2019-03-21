@@ -26,14 +26,18 @@ The `:=>` and `==>` operators have very low precedence and bind to the right, so
 
 In order to support basic type classes from the `Prelude` for `DSum`, there are also several type classes defined for "tag" types:
 
+ - `GEq tag` is similar to an `Eq` instance for `tag a` except that with `geq`, values of types `tag a` and `tag b` may be compared, and in the case of equality, evidence that the types `a` and `b` are equal is provided.
+ - `GCompare tag` is similar to the above for `Ord`, and provides `gcompare`, giving a `GOrdering` that gives similar evidence of type equality when values match.
  - `GShow tag` means that `tag a` has (the equivalent of) a `Show` instance.
- - `ShowTag tag f` means that if `tag a` is inhabited (as witnessed by providing an instance), then `f a` has (the equivalent of) a `Show` instance.
+ - `GRead tag` means that `tag a` has (the equivalent of) a `Read` instance.
 
-There are similar classes for the `Prelude`'s `Eq`, `Ord` and `Read` classes.  Together, they provide the following instances for `DSum`:
+In order to be able to compare values of type `DSum tag f` for equality, in addition to having a `GEq tag` instance, we need to know that, given a value `t :: tag a`, we may obtain an instance `Eq (f a)`, which is expressed by the use of the `Has' Eq tag f` constraint from the constraints-extras package, so we have the following instances:
 
-    instance ShowTag tag f => Show (DSum tag f)
-    instance ReadTag tag f => Read (DSum tag f)
-    instance EqTag   tag f => Eq   (DSum tag f)
-    instance OrdTag  tag f => Ord  (DSum tag f)
+    (GEq tag, Has' Eq tag f) => Eq (DSum tag f)
+    (GCompare tag, Has' Ord tag f) => Ord (DSum tag f)
+    (GShow tag, Has' Show tag f) => Show (DSum tag f)
+    (GRead tag, Has' Read tag f) => Read (DSum tag f)
 
-For example implementations of these classes, see the generated Haddock docs or the code in the `examples` directory.  There is a fair amount of boilerplate.  A few of the more common classes (`GEq`, `GCompare`, and `GShow`) can be automatically derived by Template Haskell code in the `dependent-sum-template` package.  It would be nice to implement more derivations (and it should be nearly as straightforward as deriving the Prelude classes they support), but I haven't done so yet.
+In order to satisfy the `Has'` constraints, you'll want to use `deriveArgDict` from constraints-extras, or less-commonly, write your own instance of the ArgDict class by hand, in addition to making sure that it's actually the case that for every value of your tag type, there will be a corresponding instance of Eq/Ord/Read/Show as appropriate.
+
+For example implementations of these classes, see the generated Haddock docs or the code in the `examples` directory.  There is a fair amount of boilerplate.  A few of the more common classes (`GEq`, `GCompare`, and `GShow`) can be automatically derived by Template Haskell code in the `dependent-sum-template` package.
