@@ -1,17 +1,37 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module FooGADT where
 
 import Data.Dependent.Sum
 import Data.Functor.Identity
 import Data.GADT.Show
 import Data.GADT.Compare
+import Data.Constraint.Extras
+import Data.Constraint.Extras.TH
+import Data.List (sort)
 
 data Foo a where
     Foo :: Foo Double
     Bar :: Foo Int
     Baz :: Foo String
     Qux :: Foo Double
+
+deriveArgDict ''Foo
+
+{-
+-- NB: The instance for ArgDict could be manually written as:
+
+instance ArgDict Foo where
+    type ConstraintsFor Foo c = (c Double, c Int, c String)
+    argDict x = case x of
+        Foo -> Dict
+        Bar -> Dict
+        Baz -> Dict
+        Qux -> Dict
+-}
 
 instance Eq (Foo a) where
     (==) = defaultEq
@@ -22,13 +42,6 @@ instance GEq Foo where
     geq Baz Baz = Just Refl
     geq Qux Qux = Just Refl
     geq _   _   = Nothing
-
-instance EqTag Foo Identity where
-    eqTagged Foo Foo = (==)
-    eqTagged Bar Bar = (==)
-    eqTagged Baz Baz = (==)
-    eqTagged Qux Qux = (==)
-    eqTagged _   _   = const (const False)
 
 instance GCompare Foo where
     gcompare Foo Foo = GEQ
@@ -45,14 +58,6 @@ instance GCompare Foo where
     
     gcompare Qux Qux = GEQ
 
-instance OrdTag Foo Identity where
-    compareTagged Foo Foo = compare
-    compareTagged Bar Bar = compare
-    compareTagged Baz Baz = compare
-    compareTagged Qux Qux = compare
-    
-    compareTagged _   _   = error "OrdTag (Foo): bad case"
-
 instance Show (Foo a) where
     showsPrec _ Foo      = showString "Foo"
     showsPrec _ Bar      = showString "Bar"
@@ -62,13 +67,6 @@ instance Show (Foo a) where
 instance GShow Foo where
     gshowsPrec = showsPrec
 
-instance ShowTag Foo Identity where
-    showTaggedPrec Foo = showsPrec
-    showTaggedPrec Bar = showsPrec
-    showTaggedPrec Baz = showsPrec
-    showTaggedPrec Qux = showsPrec
-
-
 instance GRead Foo where
     greadsPrec _ str = case tag of
         "Foo" -> [(GReadResult (\k -> k Foo), rest)]
@@ -77,12 +75,6 @@ instance GRead Foo where
         "Qux" -> [(GReadResult (\k -> k Qux), rest)]
         _     -> []
         where (tag, rest) = splitAt 3 str
-
-instance ReadTag Foo Identity where
-    readTaggedPrec Foo = readsPrec
-    readTaggedPrec Bar = readsPrec
-    readTaggedPrec Baz = readsPrec
-    readTaggedPrec Qux = readsPrec
 
 foo :: Double -> DSum Foo Identity
 foo x = Foo ==> x
@@ -96,5 +88,7 @@ baz x = Baz ==> x
 qux :: Double -> DSum Foo Identity
 qux x = Qux ==> x
 
-xs = [foo pi, bar 100, baz "hello world", qux (exp 1)]
+xs, xs', xs'' :: [DSum Foo Identity]
+xs = [bar 100, foo pi, qux (exp 1), baz "hello world"]
 xs' = read (show xs) `asTypeOf` xs
+xs'' = sort xs
