@@ -9,7 +9,6 @@ module Data.Some (Some(Some, This), withSome) where
 
 import Data.GADT.Show
 import Data.GADT.Compare
-import Data.Maybe
 import GHC.Exts (Any)
 import Unsafe.Coerce
 
