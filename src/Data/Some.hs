@@ -1,20 +1,26 @@
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE PolyKinds #-}
-#endif
-module Data.Some where
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE ViewPatterns #-}
+module Data.Some (Some(This), withSome) where
 
 import Data.GADT.Show
 import Data.GADT.Compare
 import Data.Maybe
+import GHC.Exts (Any)
+import Unsafe.Coerce
 
-data Some tag where
-    This :: !(tag t) -> Some tag
+newtype Some tag = UnsafeSome (tag Any)
+
+#if __GLASGOW_HASKELL__ >= 801
+{-# COMPLETE This #-}
+#endif
+pattern This :: tag a -> Some tag
+pattern This x <- UnsafeSome ((unsafeCoerce :: tag Any -> tag a) -> x)
+  where This x = UnsafeSome ((unsafeCoerce :: tag a -> tag Any) x)
 
 withSome :: Some tag -> (forall a. tag a -> b) -> b
 withSome (This thing) some = some thing
