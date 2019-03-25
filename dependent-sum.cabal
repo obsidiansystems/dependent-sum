@@ -27,6 +27,7 @@ description:            A dependent sum is a generalization of a
 tested-with:            GHC == 8.4.4
 
 extra-source-files:     examples/*.hs
+                        ChangeLog.md
 
 source-repository head
   type:     git
