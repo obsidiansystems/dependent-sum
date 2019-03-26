@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.4
+version:                0.5
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -24,15 +24,12 @@ description:            A dependent sum is a generalization of a
                         dependent sum types by using your own \"tag\"
                         types.
 
-tested-with:            GHC == 7.0.4,
-                        GHC == 7.2.2,
-                        GHC == 7.4.2,
-                        GHC == 7.6.3,
-                        GHC == 7.8.4,
-                        GHC == 7.10.1,
-                        GHC == 7.11
+tested-with:            GHC == 8.0.2,
+                        GHC == 8.2.2,
+                        GHC == 8.4.4
 
 extra-source-files:     examples/*.hs
+                        ChangeLog.md
 
 source-repository head
   type:     git
