@@ -1,26 +1,15 @@
-{-# LANGUAGE ExistentialQuantification, GADTs #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
 {-# LANGUAGE PolyKinds #-}
-#endif
+{-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.Dependent.Sum where
 
 import Control.Applicative
-
-#if MIN_VERSION_base(4,7,0)
-import Data.Typeable (Typeable)
-#else
-import Data.Dependent.Sum.Typeable ({- instance Typeable ... -})
-#endif
 
 import Data.GADT.Show
 import Data.GADT.Compare
@@ -55,9 +44,7 @@ import Data.Maybe (fromMaybe)
 -- @DSum Identity Tag@.  Its precedence is just above that of '$', so
 -- @foo bar $ AString ==> "eep"@ is equivalent to @foo bar (AString ==> "eep")@.
 data DSum tag f = forall a. !(tag a) :=> f a
-#if MIN_VERSION_base(4,7,0)
-    deriving Typeable
-#endif
+
 infixr 1 :=>, ==>
 
 (==>) :: Applicative f => tag a -> a -> DSum tag f

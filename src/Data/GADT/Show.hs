@@ -1,16 +1,22 @@
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
-{-# LANGUAGE Safe #-}
-#endif
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 708
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE PolyKinds #-}
-#endif
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE Safe #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Data.GADT.Show where
+
+import Data.Functor.Sum (Sum (..))
+import Data.Functor.Product (Product (..))
+import Data.Type.Equality ((:~:) (..))
 
 #if MIN_VERSION_base(4,10,0)
 import qualified Type.Reflection as TR
 #endif
+
+-- $setup
+-- >>> import Data.Some
 
 -- |'Show'-like class for 1-type-parameter GADTs.  @GShow t => ...@ is equivalent to something
 -- like @(forall a. Show (t a)) => ...@.  The easiest way to create instances would probably be
@@ -20,17 +26,36 @@ import qualified Type.Reflection as TR
 class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
 
+gshows :: GShow t => t a -> ShowS
+gshows = gshowsPrec (-1)
+
+gshow :: (GShow t) => t a -> String
+gshow x = gshows x ""
+
+instance GShow ((:~:) a) where
+    gshowsPrec _ Refl = showString "Refl"
 
 #if MIN_VERSION_base(4,10,0)
 instance GShow TR.TypeRep where
     gshowsPrec = showsPrec
 #endif
 
-gshows :: GShow t => t a -> ShowS
-gshows = gshowsPrec (-1)
+--
+-- | >>> gshow (InL Refl :: Sum ((:~:) Int) ((:~:) Bool) Int)
+-- "InL Refl"
+instance (GShow a, GShow b) => GShow (Sum a b) where
+    gshowsPrec d = \s -> case s of
+        InL x -> showParen (d > 10) (showString "InL " . gshowsPrec 11 x)
+        InR x -> showParen (d > 10) (showString "InR " . gshowsPrec 11 x)
 
-gshow :: (GShow t) => t a -> String
-gshow x = gshows x ""
+-- | >>> gshow (Pair Refl Refl :: Product ((:~:) Int) ((:~:) Int) Int)
+-- "Pair Refl Refl"
+instance (GShow a, GShow b) => GShow (Product a b) where
+    gshowsPrec d (Pair x y) = showParen (d > 10)
+        $ showString "Pair "
+        . gshowsPrec 11 x
+        . showChar ' '
+        . gshowsPrec 11 y
 
 newtype GReadResult t = GReadResult
   { getGReadResult :: forall b . (forall a . t a -> b) -> b }
@@ -54,3 +79,34 @@ gread s g = case hd [f | (f, "") <- greads s] of
     where
         hd (x:_) = x
         hd _ = error "gread: no parse"
+
+-- |
+--
+-- >>> greadMaybe "InL Refl" mkSome :: Maybe (Some (Sum ((:~:) Int) ((:~:) Bool)))
+-- Just (Some (InL Refl))
+--
+-- >>> greadMaybe "garbage" mkSome :: Maybe (Some ((:~:) Int))
+-- Nothing
+--
+greadMaybe :: GRead t => String -> (forall a. t a -> b) -> Maybe b
+greadMaybe s g = case [f | (f, "") <- greads s] of
+    (GReadResult res : _) -> Just (res g)
+    _                     -> Nothing
+
+instance GRead ((:~:) a) where
+    greadsPrec p s = readsPrec p s >>= f
+        where
+            f :: forall x. (x :~: x, String) -> [(GReadResult ((:~:) x), String)]
+            f (Refl, rest) = return (GReadResult (\x -> x Refl) , rest)
+
+instance (GRead a, GRead b) => GRead (Sum a b) where
+    greadsPrec d s = concat
+        [ readParen (d > 10)
+            (\s1 -> [ (GReadResult $ \k -> getGReadResult r (k . InL), t)
+                    | ("InL", s2) <- lex s1
+                    , (r, t) <- greadsPrec 11 s2 ]) s
+        , readParen (d > 10)
+            (\s1 -> [ (GReadResult $ \k -> getGReadResult r (k . InR), t)
+                    | ("InR", s2) <- lex s1
+                    , (r, t) <- greadsPrec 11 s2 ]) s
+        ]
