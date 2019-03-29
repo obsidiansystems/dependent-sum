@@ -26,7 +26,8 @@ description:            A dependent sum is a generalization of a
 
 tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
-                        GHC == 8.4.4
+                        GHC == 8.4.4,
+                        GHC == 8.6.4
 
 extra-source-files:     examples/*.hs
                         ChangeLog.md
@@ -41,10 +42,7 @@ Library
                         Data.GADT.Compare
                         Data.GADT.Show
                         Data.Some
-  
-  if impl(ghc < 7.8)
-    other-modules:      Data.Dependent.Sum.Typeable
-  
-  build-depends:        base >= 3 && <5
+  other-extensions:     PatternSynonyms
+  build-depends:        base >= 4.9 && <5
   if impl(ghc >= 7.2)
     ghc-options:        -trust base
