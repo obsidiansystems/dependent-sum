@@ -69,7 +69,7 @@ k ==> v = k :=> pure v
 -- >     showTaggedPrec AString = showsPrec
 -- >     showTaggedPrec AnInt   = showsPrec
 -- 
-class GShow tag => ShowTag tag f where
+class GShow tag => ShowTag (tag :: k -> *) (f :: k -> *) where
     -- |Given a value of type @tag a@, return the 'showsPrec' function for 
     -- the type @f a@.
     showTaggedPrec :: tag a -> Int -> f a -> ShowS
