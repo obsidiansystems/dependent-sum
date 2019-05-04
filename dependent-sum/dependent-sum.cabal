@@ -29,8 +29,8 @@ tested-with:            GHC == 8.0.2,
                         GHC == 8.4.4,
                         GHC == 8.6.4
 
-extra-source-files:     examples/*.hs
-                        ChangeLog.md
+extra-source-files:     ChangeLog.md
+                      , examples/*.hs
 
 source-repository head
   type:     git
