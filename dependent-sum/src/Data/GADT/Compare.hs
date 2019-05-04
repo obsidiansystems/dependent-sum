@@ -15,7 +15,6 @@ import Data.Maybe
 import Data.GADT.Show
 import Data.Type.Equality ((:~:) (..))
 import Data.Typeable
-import Data.Type.Equality ((:~:) (..))
 import Data.Functor.Sum (Sum (..))
 import Data.Functor.Product (Product (..))
 
