@@ -13,6 +13,7 @@ module Data.GADT.Compare
 
 import Data.Maybe
 import Data.GADT.Show
+import Data.Type.Equality ((:~:) (..))
 import Data.Typeable
 import Data.Type.Equality ((:~:) (..))
 import Data.Functor.Sum (Sum (..))
@@ -24,6 +25,7 @@ import Data.Type.Equality (testEquality)
 #endif
 
 -- |Backwards compatibility alias; as of GHC 7.8, this is the same as `(:~:)`.
+{-# DEPRECATED (:=) "use '(:~:)' from 'Data.Type,Equality'." #-}
 type (:=) = (:~:)
 
 -- |A class for type-contexts which contain enough information
@@ -45,7 +47,7 @@ class GEq f where
     -- > extractMany t1 things = [ x | (t2 :=> x) <- things, Refl <- maybeToList (geq t1 t2)]
     --
     -- (Making use of the 'DSum' type from "Data.Dependent.Sum" in both examples)
-    geq :: f a -> f b -> Maybe (a := b)
+    geq :: f a -> f b -> Maybe (a :~: b)
 
 -- |If 'f' has a 'GEq' instance, this function makes a suitable default
 -- implementation of '(==)'.
@@ -57,8 +59,8 @@ defaultEq x y = isJust (geq x y)
 defaultNeq :: GEq f => f a -> f b -> Bool
 defaultNeq x y = isNothing (geq x y)
 
-instance GEq ((:=) a) where
-    geq (Refl :: a := b) (Refl :: a := c) = Just (Refl :: b := c)
+instance GEq ((:~:) a) where
+    geq (Refl :: a :~: b) (Refl :: a :~: c) = Just (Refl :: b :~: c)
 
 instance (GEq a, GEq b) => GEq (Sum a b) where
     geq (InL x) (InL y) = geq x y
@@ -90,7 +92,7 @@ instance GEq TR.TypeRep where
 -- > y <- makeStableName id :: IO (StableName ((Int -> Int) -> Int -> Int))
 -- >
 -- > let Just boom = geq x y
--- > let coerce :: (a := b) -> a -> b; coerce Refl = id
+-- > let coerce :: (a :~: b) -> a -> b; coerce Refl = id
 -- >
 -- > coerce boom (const 0) id 0
 -- > let "Illegal Instruction" = "QED."
@@ -147,7 +149,7 @@ instance GRead (GOrdering a) where
 class GEq f => GCompare f where
     gcompare :: f a -> f b -> GOrdering a b
 
-instance GCompare ((:=) a) where
+instance GCompare ((:~:) a) where
     gcompare Refl Refl = GEQ
 
 #if MIN_VERSION_base(4,10,0)
