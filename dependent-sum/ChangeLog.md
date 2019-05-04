@@ -13,6 +13,9 @@
 * Add `mkSome` and `mapSome` to `Data.Some`.
 * Add `GEq`, `GCompare`, `GShow,` and `GRead` instances for `Sum` and `Product`
   (Except `GRead (Product a b)`)
+* Deprecate `(:=)` for `(:~:)` from `Data.Type.Equality`.
+  In GHC 7.8 and above, this is the same as `(:~:)`.
+  But now we no longer support earlier GHCs, so there's no point of the alias.
 
 ## 0.5.0.0
 
