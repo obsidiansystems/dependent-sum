@@ -74,7 +74,7 @@ class GShow tag => ShowTag (tag :: k -> *) (f :: k -> *) where
     -- the type @f a@.
     showTaggedPrec :: tag a -> Int -> f a -> ShowS
 
-instance Show (f a) => ShowTag ((:=) a) f where
+instance Show (f a) => ShowTag ((:~:) a) f where
     showTaggedPrec Refl = showsPrec
 
 -- This instance is questionable.  It works, but is pretty useless.
@@ -117,7 +117,7 @@ class GRead tag => ReadTag tag f where
 -- >     readTaggedPrec AString = readsPrec
 -- >     readTaggedPrec AnInt   = readsPrec
 -- 
-instance Read (f a) => ReadTag ((:=) a) f where
+instance Read (f a) => ReadTag ((:~:) a) f where
     readTaggedPrec Refl = readsPrec
 
 -- This instance is questionable.  It works, but is partial (and is also pretty useless)
@@ -163,7 +163,7 @@ class GEq tag => EqTag tag f where
     -- return the '==' function for the type @f a@.
     eqTagged :: tag a -> tag a -> f a -> f a -> Bool
 
-instance Eq (f a) => EqTag ((:=) a) f where
+instance Eq (f a) => EqTag ((:~:) a) f where
     eqTagged Refl Refl = (==)
 
 instance EqTag tag f => Eq (DSum tag f) where
@@ -193,7 +193,7 @@ class (EqTag tag f, GCompare tag) => OrdTag tag f where
     -- return the 'compare' function for the type @f a@.
     compareTagged :: tag a -> tag a -> f a -> f a -> Ordering
 
-instance Ord (f a) => OrdTag ((:=) a) f where
+instance Ord (f a) => OrdTag ((:~:) a) f where
     compareTagged Refl Refl = compare
 
 instance OrdTag tag f => Ord (DSum tag f) where
