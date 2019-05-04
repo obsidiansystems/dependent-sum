@@ -19,11 +19,11 @@ tested-with:            GHC == 8.0.2,
                         GHC == 8.4.4,
                         GHC == 8.6.4
 
+extra-source-files:     ChangeLog.md
+
 source-repository head
   type: git
   location: https://github.com/mokus0/dependent-sum-template
-
-extra-source-files:     ChangeLog.md
 
 Library
   if impl(ghc < 7.10)
