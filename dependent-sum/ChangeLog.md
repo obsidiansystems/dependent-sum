@@ -11,11 +11,12 @@
 ## 0.5.1.0
 
 * Add `mkSome` and `mapSome` to `Data.Some`.
-* Add `GEq`, `GCompare`, `GShow,` and `GRead` instances for `Sum` and `Product`
-  (Except `GRead (Product a b)`)
+* Add `GEq`, `GCompare`, `GShow,` and `GRead` instances for `Sum` and `Product` (Except `GRead (Product a b)`).
 * Deprecate `(:=)` for `(:~:)` from `Data.Type.Equality`.
   In GHC 7.8 and above, this is the same as `(:~:)`.
   But now we no longer support earlier GHCs, so there's no point of the alias.
+* Remove support for GHC 7.x.
+* The git repositories for dependent-sum and dependent-sum-template are now the same, though the Haskell packages remain separate.
 
 ## 0.5.0.0
 
