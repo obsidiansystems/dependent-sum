@@ -3,13 +3,17 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 import Control.Monad
 import Data.Dependent.Sum
 import Data.Functor.Identity
+import Data.Constraint.Extras.TH
 import Data.GADT.Compare
 import Data.GADT.Compare.TH
 import Data.GADT.Show
@@ -26,9 +30,7 @@ deriving instance Show (MySum a)
 deriveGShow ''MySum
 deriveGEq ''MySum
 deriveGCompare ''MySum
-deriveEqTagIdentity ''MySum
-deriveOrdTagIdentity ''MySum
-deriveShowTagIdentity ''MySum
+deriveArgDict ''MySum
 
 data MyNestedSum :: * -> * where
   MyNestedSum_MySum :: MySum a -> MyNestedSum a
@@ -42,14 +44,12 @@ deriving instance Show (MyNestedSum a)
 deriveGShow ''MyNestedSum
 deriveGEq ''MyNestedSum
 deriveGCompare ''MyNestedSum
-deriveEqTagIdentity ''MyNestedSum
-deriveOrdTagIdentity ''MyNestedSum
-deriveShowTagIdentity ''MyNestedSum
+deriveArgDict ''MyNestedSum
 
 polyTests
   :: forall m f
   .  ( MonadPlus m, Show (f Int), Show (f String)
-     , GCompare f, OrdTag f Identity, ShowTag f Identity)
+     , GCompare f, GShow f)
   => (forall a. MySum a -> f a)
   -> m ()
 polyTests f = do
@@ -64,18 +64,6 @@ polyTests f = do
   guard $ (f MySum_String `gcompare` f MySum_String) == GEQ
   guard $ (f MySum_Int `gcompare` f MySum_String) == GLT
   guard $ (f MySum_String `gcompare` f MySum_Int) == GGT
-  guard $ eqTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 1) == True
-  guard $ eqTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 2) == False
-  guard $ eqTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "a") == True
-  guard $ eqTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "b") == False
-  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 2) == LT
-  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 1) (Identity 1) == EQ
-  guard $ compareTagged (f MySum_Int) (f MySum_Int) (Identity 2) (Identity 1) == GT
-  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "b") == LT
-  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "a") (Identity "a") == EQ
-  guard $ compareTagged (f MySum_String) (f MySum_String) (Identity "b") (Identity "a") == GT
-  guard $ showTaggedPrec (f MySum_Int) 0 (Identity 1) "" == "Identity 1"
-  guard $ showTaggedPrec (f MySum_String) 0 (Identity "a") "" == "Identity \"a\""
 
 main :: IO ()
 main = do

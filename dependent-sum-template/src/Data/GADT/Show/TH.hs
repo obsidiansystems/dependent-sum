@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP, TemplateHaskell #-}
 module Data.GADT.Show.TH
     ( DeriveGShow(..)
-    , DeriveShowTagIdentity(..)
     ) where
 
 import Control.Applicative
@@ -64,50 +63,3 @@ gshowBody prec conName argNames =
           ]
         ))
      |]
-
--- A type class purely for overloading purposes
-class DeriveShowTagIdentity t where
-    deriveShowTagIdentity :: t -> Q [Dec]
-
-instance DeriveShowTagIdentity Name where
-    deriveShowTagIdentity typeName = do
-        typeInfo <- reify typeName
-        case typeInfo of
-            TyConI dec -> deriveShowTagIdentity dec
-            _ -> fail "deriveShowTagIdentity: the name of a type constructor is required"
-
-instance DeriveShowTagIdentity Dec where
-    deriveShowTagIdentity = deriveForDec ''ShowTag (\t -> [t| ShowTag $t Identity |]) showTaggedFunction
-
-instance DeriveShowTagIdentity t => DeriveShowTagIdentity [t] where
-    deriveShowTagIdentity [it] = deriveShowTagIdentity it
-    deriveShowTagIdentity _ = fail "deriveShowTagIdentity: [] instance only applies to single-element lists"
-
-instance DeriveShowTagIdentity t => DeriveShowTagIdentity (Q t) where
-    deriveShowTagIdentity = (>>= deriveShowTagIdentity)
-
-showTaggedFunction bndrs cons = funD 'showTaggedPrec $
-    map (showTaggedClause bndrs) cons
-
-showTaggedClause bndrs con = do
-    let argTypes = argTypesOfCon con
-        needsGShow argType = any ((`occursInType` argType) . nameOfBinder) (bndrs ++ varsBoundInCon con)
-
-    argVars <- for argTypes $ \argType ->
-        if needsGShow argType
-        then Just <$> newName "x"
-        else pure Nothing
-
-    let nonWildPs = [x | Just x <- argVars]
-        doRecur = case nonWildPs of
-            [] -> Nothing
-            [var] -> Just var
-            (_:_) -> error "deriveShowTagIdentity: Can have at most one nested GADT"
-
-    clause [ conP conName (maybe wildP varP <$> argVars)
-           ]
-        ( normalB $ case doRecur of
-            Nothing -> [| showsPrec |]
-            Just x -> [| showTaggedPrec $(varE x) |]
-        ) []
-    where conName = nameOfCon con

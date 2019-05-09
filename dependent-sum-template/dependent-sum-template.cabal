@@ -1,5 +1,5 @@
 name:                   dependent-sum-template
-version:                0.0.0.6
+version:                0.1.0.0
 stability:              experimental
 
 cabal-version:          >= 1.8
@@ -19,6 +19,8 @@ tested-with:            GHC == 8.0.2,
                         GHC == 8.4.4,
                         GHC == 8.6.4
 
+extra-source-files:     ChangeLog.md
+
 source-repository head
   type: git
   location: https://github.com/mokus0/dependent-sum-template
@@ -31,7 +33,7 @@ Library
                         Data.GADT.Show.TH
   other-modules:        Data.Dependent.Sum.TH.Internal
   build-depends:        base >= 3 && <5,
-                        dependent-sum >= 0.2 && < 0.6,
+                        dependent-sum >= 0.5 && < 0.6,
                         template-haskell,
                         th-extras >= 0.0.0.2
 
@@ -42,5 +44,6 @@ test-suite test
   hs-source-dirs: test
   main-is: test.hs
   build-depends: base
+               , constraints-extras
                , dependent-sum
                , dependent-sum-template

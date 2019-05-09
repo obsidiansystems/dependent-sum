@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.5
+version:                0.6
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -29,8 +29,8 @@ tested-with:            GHC == 8.0.2,
                         GHC == 8.4.4,
                         GHC == 8.6.4
 
-extra-source-files:     examples/*.hs
-                        ChangeLog.md
+extra-source-files:     ChangeLog.md
+                      , examples/*.hs
 
 source-repository head
   type:     git
@@ -44,5 +44,6 @@ Library
                         Data.Some
   other-extensions:     PatternSynonyms
   build-depends:        base >= 4.9 && <5
+                      , constraints-extras >= 0.2.3.0 && < 0.3
   if impl(ghc >= 7.2)
     ghc-options:        -trust base

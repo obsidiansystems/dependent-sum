@@ -1,5 +1,10 @@
 # Revision history for dependent-sum
 
+## 0.6 - 2019-03-21
+
+* Use constraints-extras ArgDict/Has' to define the instances of Eq, Ord, Read and Show for DSum.
+  This obviates the need for the EqTag, OrdTag, ReadTag and ShowTag classes.
+
 ## 0.5.1.0
 
 * Add `mkSome` and `mapSome` to `Data.Some`.
