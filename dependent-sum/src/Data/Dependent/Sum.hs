@@ -23,6 +23,8 @@ import Data.GADT.Compare
 
 import Data.Maybe (fromMaybe)
 
+import Text.Read
+
 -- |A basic dependent sum type; the first component is a tag that specifies
 -- the type of the second;  for example, think of a GADT such as:
 --
@@ -86,3 +88,32 @@ instance forall tag f. (GCompare tag, Has' Eq tag f, Has' Ord tag f) => Ord (DSu
         GLT -> LT
         GGT -> GT
         GEQ -> has' @Ord @f t1 (x1 `compare` x2)
+
+{-# DEPRECATED ShowTag "Instead of 'ShowTag tag f', use '(GShow tag, Has' Show tag f)'" #-}
+type ShowTag tag f = (GShow tag, Has' Show tag f)
+
+showTaggedPrec :: forall tag f a. (GShow tag, Has' Show tag f) => tag a -> Int -> f a -> ShowS
+showTaggedPrec tag = has' @Show @f tag showsPrec
+
+{-# DEPRECATED ReadTag "Instead of 'ReadTag tag f', use '(GRead tag, Has' Read tag f)'" #-}
+type ReadTag tag f = (GRead tag, Has' Read tag f)
+
+readTaggedPrec :: forall tag f a. (GRead tag, Has' Read tag f) => tag a -> Int -> ReadS (f a)
+readTaggedPrec tag = has' @Read @f tag readsPrec
+
+{-# DEPRECATED EqTag "Instead of 'EqTag tag f', use '(GEq tag, Has' Eq tag f)'" #-}
+type EqTag tag f = (GEq tag, Has' Eq tag f)
+
+eqTaggedPrec :: forall tag f a. (GEq tag, Has' Eq tag f) => tag a -> tag a -> f a -> f a -> Bool
+eqTaggedPrec tag1 tag2 f1 f2 = case tag1 `geq` tag2 of
+  Nothing -> False
+  Just Refl -> has' @Eq @f tag1 $ f1 == f2
+
+{-# DEPRECATED OrdTag "Instead of 'OrdTag tag f', use '(GCompare tag, Has' Ord tag f)'" #-}
+type OrdTag tag f = (GCompare tag, Has' Ord tag f)
+
+compareTaggedPrec :: forall tag f a. (GCompare tag, Has' Ord tag f) => tag a -> tag a -> f a -> f a -> Ordering
+compareTaggedPrec tag1 tag2 f1 f2 = case tag1 `gcompare` tag2 of
+  GLT -> LT
+  GEQ -> has' @Ord @f tag1 $ f1 `compare` f2
+  GGT -> GT
