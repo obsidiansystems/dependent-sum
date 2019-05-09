@@ -33,7 +33,7 @@ Library
                         Data.GADT.Show.TH
   other-modules:        Data.Dependent.Sum.TH.Internal
   build-depends:        base >= 3 && <5,
-                        dependent-sum >= 0.5 && < 0.6,
+                        dependent-sum >= 0.4.1 && < 0.7,
                         template-haskell,
                         th-extras >= 0.0.0.2
 
