@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.6
+version:                0.6.1
 stability:              provisional
 
 cabal-version:          >= 1.6
@@ -44,6 +44,6 @@ Library
                         Data.Some
   other-extensions:     PatternSynonyms
   build-depends:        base >= 4.9 && <5
-                      , constraints-extras >= 0.2.3.0 && < 0.3
+                      , constraints-extras >= 0.2.3.0 && < 0.4
   if impl(ghc >= 7.2)
     ghc-options:        -trust base
