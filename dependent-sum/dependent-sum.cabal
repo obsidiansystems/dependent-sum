@@ -42,6 +42,7 @@ Library
                         Data.GADT.Compare
                         Data.GADT.Show
                         Data.Some
+                        Data.Some.Lazy
   other-extensions:     PatternSynonyms
   build-depends:        base >= 4.9 && <5
                       , constraints-extras >= 0.2 && < 0.4
