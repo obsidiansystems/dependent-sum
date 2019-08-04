@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.6.1.0 - 2019-08-04
+
+* Add some `eqTagged` and `compareTagged` functions
+
 ## 0.6 - 2019-03-21
 
 * Use constraints-extras ArgDict/Has' to define the instances of Eq, Ord, Read and Show for DSum.
