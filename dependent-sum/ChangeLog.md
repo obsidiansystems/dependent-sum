@@ -3,6 +3,7 @@
 ## 0.6.1.0 - 2019-08-04
 
 * Add some `eqTagged` and `compareTagged` functions
+* Fix deprecated `OrdTag` synonym (it was missing the `Has' Eq` constraint)
 
 ## 0.6 - 2019-03-21
 
