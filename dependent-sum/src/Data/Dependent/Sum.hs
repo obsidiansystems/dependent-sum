@@ -87,7 +87,7 @@ instance forall tag f. (GCompare tag, Has' Eq tag f, Has' Ord tag f) => Ord (DSu
     compare (t1 :=> x1) (t2 :=> x2)  = case gcompare t1 t2 of
         GLT -> LT
         GGT -> GT
-        GEQ -> has' @Ord @f t1 (x1 `compare` x2)
+        GEQ -> has' @Eq @f t1 $ has' @Ord @f t1 (x1 `compare` x2)
 
 {-# DEPRECATED ShowTag "Instead of 'ShowTag tag f', use '(GShow tag, Has' Show tag f)'" #-}
 type ShowTag tag f = (GShow tag, Has' Show tag f)
@@ -109,11 +109,17 @@ eqTaggedPrec tag1 tag2 f1 f2 = case tag1 `geq` tag2 of
   Nothing -> False
   Just Refl -> has' @Eq @f tag1 $ f1 == f2
 
-{-# DEPRECATED OrdTag "Instead of 'OrdTag tag f', use '(GCompare tag, Has' Ord tag f)'" #-}
-type OrdTag tag f = (GCompare tag, Has' Ord tag f)
+eqTagged :: forall tag f a. EqTag tag f => tag a -> tag a -> f a -> f a -> Bool
+eqTagged k _ x0 x1 = has' @Eq @f k (x0 == x1)
 
-compareTaggedPrec :: forall tag f a. (GCompare tag, Has' Ord tag f) => tag a -> tag a -> f a -> f a -> Ordering
+{-# DEPRECATED OrdTag "Instead of 'OrdTag tag f', use '(GCompare tag, Has' Eq tag f, Has' Ord tag f)'" #-}
+type OrdTag tag f = (GCompare tag, Has' Eq tag f, Has' Ord tag f)
+
+compareTaggedPrec :: forall tag f a. (GCompare tag, Has' Eq tag f, Has' Ord tag f) => tag a -> tag a -> f a -> f a -> Ordering
 compareTaggedPrec tag1 tag2 f1 f2 = case tag1 `gcompare` tag2 of
   GLT -> LT
-  GEQ -> has' @Ord @f tag1 $ f1 `compare` f2
+  GEQ -> has' @Eq @f tag1 $ has' @Ord @f tag1 $ f1 `compare` f2
   GGT -> GT
+
+compareTagged :: forall tag f a. OrdTag tag f => tag a -> tag a -> f a -> f a -> Ordering
+compareTagged k _ x0 x1 = has' @Eq @f k $ has' @Ord @f k (compare x0 x1)
