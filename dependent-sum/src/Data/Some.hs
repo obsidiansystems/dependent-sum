@@ -16,12 +16,24 @@ import Unsafe.Coerce (unsafeCoerce)
 -- $setup
 -- >>> :set -XKindSignatures -XGADTs
 
--- | Existential. This is type is useful to hide GADTs' parameters.
+-- | An existential wrapper useful for hiding GADTs' parameters.
+--
+-- @Some@ could conceptually be defined
+--
+-- @
+-- data Some f where
+--   Some :: forall a. !(f a) -> Some f
+-- @
+--
+-- Unlike that conceptual definition, there is no extra indirection from
+-- a data constructor. The @Some@ pattern synonym simulates this definition.
+--
+-- === Example
 --
 -- >>> data Tag :: * -> * where TagInt :: Tag Int; TagBool :: Tag Bool
 -- >>> instance GShow Tag where gshowsPrec _ TagInt = showString "TagInt"; gshowsPrec _ TagBool = showString "TagBool"
 --
--- You can either use @PatternSynonyms@
+-- Using the pattern synonym (recommended):
 --
 -- >>> let x = Some TagInt
 -- >>> x
@@ -30,7 +42,7 @@ import Unsafe.Coerce (unsafeCoerce)
 -- >>> case x of { Some TagInt -> "I"; Some TagBool -> "B" } :: String
 -- "I"
 --
--- or you can use functions
+-- Alternatively, you can use explicit packing and unpacking functions:
 --
 -- >>> let y = mkSome TagBool
 -- >>> y
