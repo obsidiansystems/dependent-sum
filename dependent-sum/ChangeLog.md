@@ -2,8 +2,7 @@
 
 ## 0.6.1.0 - 2019-08-04
 
-* Add some `eqTagged` and `compareTagged` functions
-* Fix deprecated `OrdTag` synonym (it was missing the `Has' Eq` constraint)
+* Add legacy `eqTagged` and `compareTagged` functions. Fix deprecated `OrdTag` synonym (it was missing the `Has' Eq` constraint). To upgrade from dependent-sum <0.6, you will likely need to add enable the `FlexibleContexts` language extension, and possible others.
 
 ## 0.6 - 2019-03-21
 
