@@ -6,7 +6,7 @@
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE Trustworthy #-}
-module Data.Some (Some(Some, This), mkSome, withSome, mapSome) where
+module Data.Some (Some(Some, This), mkSome, withSome, mapSome, traverseSome) where
 
 import Data.GADT.Show
 import Data.GADT.Compare
@@ -108,4 +108,7 @@ instance GCompare tag => Ord (Some tag) where
     compare (Some x) (Some y) = defaultCompare x y
 
 mapSome :: (forall t. f t -> g t) -> Some f -> Some g
-mapSome f (UnsafeSome x) = UnsafeSome (f x)
+mapSome f !(UnsafeSome x) = UnsafeSome (f x)
+
+traverseSome :: Functor m => (forall t. f t -> m (g t)) -> Some f -> m (Some g)
+traverseSome f !(UnsafeSome x) = UnsafeSome <$> f x
