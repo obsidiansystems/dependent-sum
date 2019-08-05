@@ -51,13 +51,12 @@ import Unsafe.Coerce (unsafeCoerce)
 -- Some TagBool
 --
 newtype Some tag = UnsafeSome (tag Any)
-data SBox a = SBox !a
 
 #if __GLASGOW_HASKELL__ >= 801
 {-# COMPLETE Some #-}
 #endif
 pattern Some :: tag a -> Some tag
-pattern Some x <- UnsafeSome (SBox . (unsafeCoerce :: tag Any -> tag a) -> SBox x)
+pattern Some x <- UnsafeSome ((unsafeCoerce :: tag Any -> tag a) -> x)
   where Some x = UnsafeSome ((unsafeCoerce :: tag a -> tag Any) x)
 
 #if __GLASGOW_HASKELL__ >= 801
