@@ -6,12 +6,24 @@
 {-# LANGUAGE Trustworthy #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE Trustworthy #-}
-module Data.Some (Some(Some, This), mkSome, withSome, mapSome) where
+{-# LANGUAGE ScopedTypeVariables #-}
+module Data.Some
+  ( Some (Some, This)
+  , ThenSome (..)
+  , BeforeSome (..)
+  , mkSome
+  , withSome
+  , mapSome
+  ) where
 
 import Data.GADT.Show
 import Data.GADT.Compare
 import GHC.Exts (Any)
 import Unsafe.Coerce (unsafeCoerce)
+import Data.Coerce (coerce)
+#if !MIN_VERSION_base(4,11,0)
+import Data.Semigroup (Semigroup ((<>)))
+#endif
 
 -- $setup
 -- >>> :set -XKindSignatures -XGADTs
@@ -96,3 +108,35 @@ instance GCompare tag => Ord (Some tag) where
 
 mapSome :: (forall t. f t -> g t) -> Some f -> Some g
 mapSome f (UnsafeSome x) = UnsafeSome (f x)
+
+-- | A 'Monoid' using '*>' for an underlying 'Applicative' functor.
+newtype ThenSome f = ThenSome { getThenSome :: Some f }
+  deriving (Eq, Ord, Read, Show)
+
+#if MIN_VERSION_base(4,9,0)
+-- This should really be Apply, but we can't do that for now.
+instance Applicative f => Semigroup (ThenSome f) where
+    (<>) = coerce ((*>) :: f Any -> f Any -> f Any)
+#endif
+
+instance Applicative f => Monoid (ThenSome f) where
+  mempty = ThenSome (Some (pure ()))
+#if !MIN_VERSION_base(4,11,0)
+  mappend = coerce ((*>) :: f Any -> f Any -> f Any)
+#endif
+
+-- | A 'Monoid' using '<*' for an underlying 'Applicative' functor.
+newtype BeforeSome f = BeforeSome { getBeforeSome :: Some f }
+  deriving (Eq, Ord, Read, Show)
+
+#if MIN_VERSION_base(4,9,0)
+-- This should really be Apply, but we can't do that for now.
+instance Applicative f => Semigroup (BeforeSome f) where
+  (<>) = coerce ((<*) :: f Any -> f Any -> f Any)
+#endif
+
+instance Applicative f => Monoid (BeforeSome f) where
+  mempty = BeforeSome (Some (pure ()))
+#if !MIN_VERSION_base(4,11,0)
+  mappend = coerce ((<*) :: f Any -> f Any -> f Any)
+#endif
