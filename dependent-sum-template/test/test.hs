@@ -19,6 +19,7 @@ import Data.GADT.Compare
 import Data.GADT.Compare.TH
 import Data.GADT.Show
 import Data.GADT.Show.TH
+import Data.Type.Equality
 
 data MySum :: * -> * where
   MySum_Int :: MySum Int
