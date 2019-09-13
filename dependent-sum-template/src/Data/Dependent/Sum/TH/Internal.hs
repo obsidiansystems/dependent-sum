@@ -47,13 +47,6 @@ skolemize rigids t = case t of
 reifyInstancesWithRigids :: Set Name -> Name -> [Type] -> Q [InstanceDec]
 reifyInstancesWithRigids rigids cls tys = reifyInstances cls (map (skolemize rigids) tys)
 
--- | Given an instance declaration, and a list of types which should match it,
--- unify the types with the variables in the instance head, and apply the
--- resulting substitutions to the instance context, obtaining constraints which
--- must be satisfied for the instance to exist.
---unifyContext :: InstanceDec -> [Type] -> Cxt
---unifyContext
-
 -- | Determine the type variables which occur freely in a type.
 freeTypeVariables :: Type -> Set Name
 freeTypeVariables t = case t of

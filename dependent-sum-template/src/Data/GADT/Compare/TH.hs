@@ -47,10 +47,12 @@ instance DeriveGEQ Name where
 
     return [InstanceD Nothing cxt instanceHead [geqFunction clauses]]
 
+{-
 instance DeriveGEQ Dec where
   deriveGEq dec = do
     clauses <- mapM (geqClauseOld bndrs) cons
     deriveForDec ''GEq (\t -> [t| GEq $t |]) (pure $ geqFunction clauses)
+-}
 
 instance DeriveGEQ t => DeriveGEQ [t] where
   deriveGEq [it] = deriveGEq it
