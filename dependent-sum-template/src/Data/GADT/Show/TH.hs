@@ -5,27 +5,53 @@ module Data.GADT.Show.TH
 
 import Control.Applicative
 import Control.Monad
+import Control.Monad.Writer
 import Data.Dependent.Sum
 import Data.Dependent.Sum.TH.Internal
 import Data.Functor.Identity
 import Data.GADT.Show
 import Data.Traversable (for)
 import Data.List
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Language.Haskell.TH
 import Language.Haskell.TH.Extras
+import Language.Haskell.TH.Datatype
 
 class DeriveGShow t where
-    deriveGShow :: t -> Q [Dec]
+  deriveGShow :: t -> Q [Dec]
 
 instance DeriveGShow Name where
-    deriveGShow typeName = do
-        typeInfo <- reify typeName
-        case typeInfo of
-            TyConI dec -> deriveGShow dec
-            _ -> fail "deriveGShow: the name of a type constructor is required"
+  deriveGShow typeName = do
+  typeInfo <- reifyDatatype typeName
+  let instTypes = datatypeInstTypes typeInfo
+      paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      instTypes' = case reverse instTypes of
+        [] -> fail "deriveGEq: Not enough type parameters"
+        (_:xs) -> reverse xs
+      instanceHead = AppT (ConT ''GShow) (foldl AppT (ConT typeName) instTypes')
+  (clauses, cxt) <- runWriterT (mapM (gshowClause typeName paramVars) (datatypeCons typeInfo))
 
+  return [InstanceD Nothing cxt instanceHead [gshowFunction clauses]]
+
+{-
+  deriveGShow typeName = do
+    typeInfo <- reify typeName
+    case typeInfo of
+      TyConI dec -> do
+        topVars' <- makeTopVars typeName
+        let topVars = case topVars' of
+              [] -> []
+              _ -> init topVars'
+        let derivedType = foldl AppT (ConT typeName) (map VarT topVars)
+        deriveForDec ''GShow (\_ -> [t| GShow $(pure derivedType) |]) (\_ -> gshowFunction (Just topVars')) dec
+      _ -> fail "deriveGShow: the name of a type constructor is required"
+-}
+
+{- -- TODO: Reinstate.
 instance DeriveGShow Dec where
-    deriveGShow = deriveForDec ''GShow (\t -> [t| GShow $t |]) $ \_ -> gshowFunction
+    deriveGShow = deriveForDec ''GShow (\t -> [t| GShow $t |]) (\_ -> gshowFunction Nothing)
+-}
 
 instance DeriveGShow t => DeriveGShow [t] where
     deriveGShow [it] = deriveGShow it
@@ -34,32 +60,61 @@ instance DeriveGShow t => DeriveGShow [t] where
 instance DeriveGShow t => DeriveGShow (Q t) where
     deriveGShow = (>>= deriveGShow)
 
-gshowFunction = funD 'gshowsPrec . map gshowClause
+gshowFunction :: [Clause] -> Dec
+gshowFunction clauses = FunD 'gshowsPrec clauses
 
-gshowClause con = do
-    let conName  = nameOfCon con
-        argTypes = argTypesOfCon con
-        nArgs    = length argTypes
+isApplicationOf :: Type -> Type -> Bool
+isApplicationOf t t' = t == t' || case t' of
+  AppT u _ -> isApplicationOf t u
+  _ -> False
 
-        precName = mkName "p"
+gshowClause :: Name -> Set Name -> ConstructorInfo -> WriterT [Type] Q Clause
+gshowClause typeName paramVars con = do
+  let conName  = constructorName con
+      argTypes = constructorFields con
+      conTyVars = Set.fromList (map tvName (constructorVars con))
 
-    argNames <- replicateM nArgs (newName "x")
+  precName <- lift $ newName "prec"
+  argNames <- forM argTypes $ \_ -> lift $ newName "x"
 
-    let precPat = if null argNames
-          then wildP
-          else varP precName
 
-    clause [precPat, conP conName (map varP argNames)]
-        (normalB (gshowBody (varE precName) conName argNames)) []
+
+  argShowExprs <- forM (zip argNames argTypes) $ \(n,t) -> do
+    case t of
+      AppT tyFun tyArg -> do
+        let useGShow = do
+              tell [AppT (ConT ''GShow) tyFun] 
+              return [| gshowsPrec 11 $(varE n) |]
+            useShow = do
+              tell [AppT (ConT ''Show) t]
+              return [| showsPrec 11 $(varE n) |]
+        if isApplicationOf (ConT typeName) tyFun
+          then return [| gshowsPrec 11 $(varE n) |]
+          else do
+            v <- lift $ reifyInstancesWithRigids paramVars ''GShow [tyFun]
+            case v of
+              (_:_) -> useGShow
+              _ -> do
+                u <- lift $ reifyInstancesWithRigids paramVars ''Show [t]
+                case u of
+                  (_:_) -> useShow
+                  [] -> useGShow
+      _ -> useShow
+
+  let precPat = if null argNames
+        then wildP
+        else varP precName
+
+  lift $ clause [precPat, conP conName (map varP argNames)]
+    (normalB (gshowBody (varE precName) conName argShowExprs)) []
 
 showsName name = [| showString $(litE . stringL $ nameBase name) |]
 
+gshowBody :: Q Exp -> Name -> [Q Exp] -> Q Exp
 gshowBody prec conName [] = showsName conName
-gshowBody prec conName argNames =
-    [| showParen ($prec > 10) $( composeExprs $ intersperse [| showChar ' ' |]
-        ( showsName conName
-        : [ [| showsPrec 11 $arg |]
-          | argName <- argNames, let arg = varE argName
-          ]
-        ))
-     |]
+gshowBody prec conName argShowExprs =
+  [| showParen ($prec > 10) $( composeExprs $ intersperse [| showChar ' ' |]
+      ( showsName conName
+      : argShowExprs
+      ))
+   |]

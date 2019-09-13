@@ -5,8 +5,14 @@
 {-# LANGUAGE Safe #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DefaultSignatures #-}
+{-# LANGUAGE FlexibleContexts #-}
+
 module Data.GADT.Show where
 
+import Data.Constraint.Forall
+import Data.Constraint.Extras
 import Data.Functor.Sum (Sum (..))
 import Data.Functor.Product (Product (..))
 import Data.Type.Equality ((:~:) (..))
@@ -22,9 +28,13 @@ import qualified Type.Reflection as TR
 -- like @(forall a. Show (t a)) => ...@.  The easiest way to create instances would probably be
 -- to write (or derive) an @instance Show (T a)@, and then simply say:
 --
--- > instance GShow t where gshowsPrec = showsPrec
+-- > instance GShow t
+--
+-- with any additional constraints as might be required by the Show instance.
 class GShow t where
     gshowsPrec :: Int -> t a -> ShowS
+    default gshowsPrec :: ForallF Show t => Int -> t a -> ShowS
+    gshowsPrec n (x :: t a) = whichever @Show @t @a (showsPrec n x)
 
 gshows :: GShow t => t a -> ShowS
 gshows = gshowsPrec (-1)

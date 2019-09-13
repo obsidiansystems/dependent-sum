@@ -69,7 +69,7 @@ polyTests f = do
 main :: IO ()
 main = do
   polyTests id
-  polyTests MyNestedSum_MySum
+  --polyTests MyNestedSum_MySum
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they
@@ -87,21 +87,21 @@ data Bar a where
     F :: Foo a -> Bar a
     S :: Bar String
 
-data Baz a where
-    L :: Qux a -> Int -> Baz [a]
-
 data Qux a where
     FB :: Foo (a -> b) -> Bar b -> Qux (a -> (b, b))
 
+data Baz a where
+    L :: Qux a -> Int -> Baz [a]
+
 deriveGEq ''Foo
 deriveGEq ''Bar
-deriveGEq ''Baz
 deriveGEq ''Qux
+deriveGEq ''Baz
 
 deriveGCompare ''Foo
 deriveGCompare ''Bar
-deriveGCompare ''Baz
 deriveGCompare ''Qux
+deriveGCompare ''Baz
 
 instance Show (Foo a) where showsPrec = gshowsPrec
 instance Show (Bar a) where showsPrec = gshowsPrec
@@ -110,8 +110,8 @@ instance Show (Qux a) where showsPrec = gshowsPrec
 
 deriveGShow ''Foo
 deriveGShow ''Bar
-deriveGShow ''Baz
 deriveGShow ''Qux
+deriveGShow ''Baz
 
 data Squudge a where
     E :: Ord a => Foo a -> Squudge a
@@ -153,16 +153,31 @@ deriveGCompare ''Empty
 -- ([t||] brackets won't work because they can only quote types of kind *).
 data Spleeb a b where
     P :: a Double -> Qux b -> Spleeb a b
+
+deriveGEq ''Spleeb
+deriveGCompare ''Spleeb
+
+-- NB: We could also write:
+-- deriving instance (Show (a Double), Show (Qux b)) => Show (Spleeb a b)
+-- instance (Show (a Double)) => GShow (Spleeb a)
+
+deriveGShow ''Spleeb
+
+{-
+data SpleebHard a b where
+    PH :: a Double -> Qux b -> SpleebHard a b
+
 -- need a cleaner 'one-shot' way of defining these - the empty instances need to appear
 -- in the same quotation because the GEq context of the GCompare class causes stage
 -- restriction errors... seems like GHC shouldn't actually check things like that till
 -- the final splice, but whatever.
+
 do
     [geqInst, gcompareInst, gshowInst] <-
         [d|
-            instance GEq a => GEq (Spleeb a)
-            instance GCompare a => GCompare (Spleeb a)
-            instance Show (a Double) => GShow (Spleeb a)
+            instance GEq a => GEq (SpleebHard a)
+            instance GCompare a => GCompare (SpleebHard a)
+            instance Show (a Double) => GShow (SpleebHard a)
           |]
 
     concat <$> sequence
@@ -171,7 +186,7 @@ do
         , deriveGShow    gshowInst
         ]
 
-instance Show (a Double) => Show (Spleeb a b) where showsPrec = gshowsPrec
+instance Show (a Double) => Show (SpleebHard a b) where showsPrec = gshowsPrec
 
 -- another option; start from the declaration and juggle that a bit
 do
@@ -191,3 +206,4 @@ do
         ]
 
 instance Show (Fnord a) where showsPrec = gshowsPrec
+-}

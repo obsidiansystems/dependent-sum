@@ -132,9 +132,6 @@ instance Show (GOrdering a b) where
     showsPrec _ GEQ = showString "GEQ"
     showsPrec _ GLT = showString "GLT"
 
-instance GShow (GOrdering a) where
-    gshowsPrec = showsPrec
-
 instance GRead (GOrdering a) where
     greadsPrec _ s = case con of
         "GGT"   -> [(GReadResult (\x -> x GGT), rest)]
