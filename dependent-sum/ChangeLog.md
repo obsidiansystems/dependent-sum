@@ -1,5 +1,13 @@
 # Revision history for dependent-sum
 
+## 0.6.2.0 - 2019-08-04
+
+* Revert change that increased strictness of Data.Some.Some in 0.6.1
+
+## 0.6.1.0 - 2019-08-04
+
+* Add legacy `eqTagged` and `compareTagged` functions. Fix deprecated `OrdTag` synonym (it was missing the `Has' Eq` constraint). To upgrade from dependent-sum <0.6, you will likely need to add enable the `FlexibleContexts` language extension, and possible others.
+
 ## 0.6 - 2019-03-21
 
 * Use constraints-extras ArgDict/Has' to define the instances of Eq, Ord, Read and Show for DSum.
