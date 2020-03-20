@@ -1,5 +1,5 @@
 name:                   dependent-sum-template
-version:                0.1.0.0
+version:                0.1.0.1
 stability:              experimental
 
 cabal-version:          >= 1.8
@@ -17,13 +17,14 @@ description:            Template Haskell code to generate instances of classes i
 tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
                         GHC == 8.4.4,
-                        GHC == 8.6.5
+                        GHC == 8.6.5,
+                        GHC == 8.8.3
 
 extra-source-files:     ChangeLog.md
 
 source-repository head
   type: git
-  location: https://github.com/mokus0/dependent-sum-template
+  location: https://github.com/mokus0/dependent-sum
 
 Library
   if impl(ghc < 7.10)

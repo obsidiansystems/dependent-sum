@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.6.2.0
+version:                0.6.2.1
 stability:              provisional
 
 cabal-version:          1.22
@@ -27,7 +27,8 @@ description:            A dependent sum is a generalization of a
 tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
                         GHC == 8.4.4,
-                        GHC == 8.6.5
+                        GHC == 8.6.5,
+                        GHC == 8.8.3
 
 extra-source-files:     ChangeLog.md
                       , examples/*.hs
