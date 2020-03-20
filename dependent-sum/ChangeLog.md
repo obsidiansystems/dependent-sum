@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.6.2.1 - 2020-03-21
+
+* Update cabal meta-information (tested with GHC 8.8).
+
 ## 0.6.2.0 - 2019-08-04
 
 * Revert change that increased strictness of Data.Some.Some in 0.6.1
