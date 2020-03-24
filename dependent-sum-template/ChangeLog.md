@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.1.0.3 - 2020-03-24
+
+* Relax version bounds on `dependent-sum` to include 0.7.
+
 ## 0.1.0.2 - 2020-03-23
 
 * Update GitHub repository in cabal metadata.
