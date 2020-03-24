@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.6.2.2 - 2020-03-23
+
+* Update GitHub repository in cabal metadata.
+
 ## 0.6.2.1 - 2020-03-21
 
 * Update cabal meta-information (tested with GHC 8.8).

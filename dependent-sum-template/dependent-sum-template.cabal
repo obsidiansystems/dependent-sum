@@ -1,5 +1,5 @@
 name:                   dependent-sum-template
-version:                0.1.0.1
+version:                0.1.0.2
 stability:              experimental
 
 cabal-version:          >= 1.8
@@ -8,7 +8,7 @@ build-type:             Simple
 author:                 James Cook <mokus@deepbondi.net>
 maintainer:             Ryan Trinkle <ryan.trinkle@obsidian.systems>
 license:                PublicDomain
-homepage:               /dev/null
+homepage:               https://github.com/obsidiansystems/dependent-sum
 
 category:               Unclassified
 synopsis:               Template Haskell code to generate instances of classes in dependent-sum package
@@ -24,7 +24,7 @@ extra-source-files:     ChangeLog.md
 
 source-repository head
   type: git
-  location: https://github.com/mokus0/dependent-sum
+  location: https://github.com/obsidiansystems/dependent-sum
 
 Library
   if impl(ghc < 7.10)
