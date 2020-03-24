@@ -1,4 +1,4 @@
-dependent-sum [![Build Status](https://travis-ci.org/obsidiansystems/dependent-sum.svg)](https://travis-ci.org/obsidiansystems/dependent-sum)
+dependent-sum [![Build Status](https://travis-ci.org/obsidiansystems/dependent-sum.svg)](https://travis-ci.org/obsidiansystems/dependent-sum) [![Hackage](https://img.shields.io/hackage/v/dependent-sum.svg)](http://hackage.haskell.org/package/dependent-sum)
 ==============
 
 This library defines a dependent sum type:
