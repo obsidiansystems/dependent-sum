@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.7.1.0 - 2020-03-25
+
+* Shift version bounds for `some` to 1.0.1.* versions.
+
 ## 0.7.0.0 - 2020-03-24
 
 * Fix ChangeLog to include the breaking change in 0.6.2.1/0.6.2.2 and properly do *major* version bump to reflect the breaking change.
