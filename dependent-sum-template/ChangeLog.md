@@ -1,4 +1,4 @@
-# Revision history for dependent-sum
+# Revision history for dependent-sum-template
 
 ## 0.1.0.3 - 2020-03-24
 
