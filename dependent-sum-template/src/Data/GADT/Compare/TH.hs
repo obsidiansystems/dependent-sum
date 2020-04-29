@@ -110,11 +110,6 @@ instance DeriveGCompare Name where
       dec <- gcompareFunction clauses
       return [InstanceD Nothing cxt instanceHead [dec]]
 
-{- -- TODO: Reinstate this
-instance DeriveGCompare Dec where
-    deriveGCompare = deriveForDec ''GCompare (\t -> [t| GCompare $t |]) (gcompareFunction Nothing)
--}
-
 instance DeriveGCompare Dec where
     deriveGCompare = deriveForDec ''GCompare $ \typeInfo -> do
       let

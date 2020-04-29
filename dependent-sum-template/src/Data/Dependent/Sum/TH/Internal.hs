@@ -86,21 +86,16 @@ deriveForDec className f (InstanceD overlaps cxt instanceHead decs) = do
     fail $ "while deriving " ++ show className ++ ": wrong class name in prototype declaration: " ++ show givenClassName
   let dataTypeName = headOfType firstParam
   dataTypeInfo <- reifyDatatype dataTypeName
-  liftIO $ print dataTypeInfo
-
-
   let instTypes = datatypeInstTypes dataTypeInfo
       paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
       instTypes' = case reverse instTypes of
         [] -> fail "deriveGEq: Not enough type parameters"
         (_:xs) -> reverse xs
       generatedInstanceHead = AppT (ConT className) (foldl AppT (ConT $ datatypeName dataTypeInfo) instTypes')
-
   unifiedTypes <- unifyTypes [generatedInstanceHead, instanceHead]
   let
     newInstanceHead = applySubstitution unifiedTypes instanceHead
     newContext = applySubstitution unifiedTypes cxt
-
   -- We are not using the generated context that we collect from f, instead
   -- relying on a correct instance head from the user
   (dec, _) <- runWriterT $ f dataTypeInfo
