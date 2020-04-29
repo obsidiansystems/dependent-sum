@@ -47,12 +47,13 @@ instance DeriveGEQ Name where
 
     return [InstanceD Nothing cxt instanceHead [geqFunction clauses]]
 
-{-
 instance DeriveGEQ Dec where
-  deriveGEq dec = do
-    clauses <- mapM (geqClauseOld bndrs) cons
-    deriveForDec ''GEq (\t -> [t| GEq $t |]) (pure $ geqFunction clauses)
--}
+    deriveGEq = deriveForDec ''GEq $ \typeInfo -> do
+      let
+        instTypes = datatypeInstTypes typeInfo
+        paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      clauses <- mapM (geqClause paramVars) (datatypeCons typeInfo)
+      return $ geqFunction clauses
 
 instance DeriveGEQ t => DeriveGEQ [t] where
   deriveGEq [it] = deriveGEq it
@@ -113,6 +114,14 @@ instance DeriveGCompare Name where
 instance DeriveGCompare Dec where
     deriveGCompare = deriveForDec ''GCompare (\t -> [t| GCompare $t |]) (gcompareFunction Nothing)
 -}
+
+instance DeriveGCompare Dec where
+    deriveGCompare = deriveForDec ''GCompare $ \typeInfo -> do
+      let
+        instTypes = datatypeInstTypes typeInfo
+        paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      clauses <- mapM (gcompareClauses paramVars) (datatypeCons typeInfo)
+      lift $ gcompareFunction (concat clauses)
 
 instance DeriveGCompare t => DeriveGCompare [t] where
     deriveGCompare [it] = deriveGCompare it

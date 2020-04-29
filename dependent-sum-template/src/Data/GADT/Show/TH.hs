@@ -32,26 +32,15 @@ instance DeriveGShow Name where
       instanceHead = AppT (ConT ''GShow) (foldl AppT (ConT typeName) instTypes')
   (clauses, cxt) <- runWriterT (mapM (gshowClause typeName paramVars) (datatypeCons typeInfo))
 
-  return [InstanceD Nothing cxt instanceHead [gshowFunction clauses]]
+  return [InstanceD Nothing (datatypeContext typeInfo ++ cxt) instanceHead [gshowFunction clauses]]
 
-{-
-  deriveGShow typeName = do
-    typeInfo <- reify typeName
-    case typeInfo of
-      TyConI dec -> do
-        topVars' <- makeTopVars typeName
-        let topVars = case topVars' of
-              [] -> []
-              _ -> init topVars'
-        let derivedType = foldl AppT (ConT typeName) (map VarT topVars)
-        deriveForDec ''GShow (\_ -> [t| GShow $(pure derivedType) |]) (\_ -> gshowFunction (Just topVars')) dec
-      _ -> fail "deriveGShow: the name of a type constructor is required"
--}
-
-{- -- TODO: Reinstate.
 instance DeriveGShow Dec where
-    deriveGShow = deriveForDec ''GShow (\t -> [t| GShow $t |]) (\_ -> gshowFunction Nothing)
--}
+    deriveGShow = deriveForDec ''GShow $ \typeInfo -> do
+      let
+        instTypes = datatypeInstTypes typeInfo
+        paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      clauses <- mapM (gshowClause (datatypeName typeInfo) paramVars) (datatypeCons typeInfo)
+      return $ gshowFunction clauses
 
 instance DeriveGShow t => DeriveGShow [t] where
     deriveGShow [it] = deriveGShow it
