@@ -72,7 +72,7 @@ polyTests f = do
 main :: IO ()
 main = do
   polyTests id
-  --polyTests MyNestedSum_MySum
+  polyTests MyNestedSum_MySum
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they
