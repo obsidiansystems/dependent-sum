@@ -12,6 +12,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -ddump-splices #-}
 import Control.Monad
 import Data.Dependent.Sum
 import Data.Functor.Identity
@@ -20,6 +21,7 @@ import Data.GADT.Compare
 import Data.GADT.Compare.TH
 import Data.GADT.Show
 import Data.GADT.Show.TH
+import Data.Type.Equality
 
 data MySum :: * -> * where
   MySum_Int :: MySum Int
@@ -70,7 +72,7 @@ polyTests f = do
 main :: IO ()
 main = do
   polyTests id
-  --polyTests MyNestedSum_MySum
+  polyTests MyNestedSum_MySum
   return ()
 
 --TODO: Figure out how to best use these test cases; just checking that they
@@ -164,9 +166,10 @@ deriveGCompare ''Spleeb
 
 deriveGShow ''Spleeb
 
-{-
+
 data SpleebHard a b where
     PH :: a Double -> Qux b -> SpleebHard a b
+
 
 -- need a cleaner 'one-shot' way of defining these - the empty instances need to appear
 -- in the same quotation because the GEq context of the GCompare class causes stage
@@ -178,7 +181,7 @@ do
         [d|
             instance GEq a => GEq (SpleebHard a)
             instance GCompare a => GCompare (SpleebHard a)
-            instance Show (a Double) => GShow (SpleebHard a)
+            instance GShow a => GShow (SpleebHard a)
           |]
 
     concat <$> sequence
@@ -187,7 +190,7 @@ do
         , deriveGShow    gshowInst
         ]
 
-instance Show (a Double) => Show (SpleebHard a b) where showsPrec = gshowsPrec
+instance GShow a => Show (SpleebHard a b) where showsPrec = gshowsPrec
 
 -- another option; start from the declaration and juggle that a bit
 do
@@ -207,4 +210,3 @@ do
         ]
 
 instance Show (Fnord a) where showsPrec = gshowsPrec
--}

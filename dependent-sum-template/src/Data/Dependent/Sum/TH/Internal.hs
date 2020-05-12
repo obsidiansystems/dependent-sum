@@ -77,30 +77,39 @@ subst s = f
 -- multiple.
 deriveForDec
   :: Name
-  -> (Q Type -> Q Type)
-  -> ([TyVarBndr] -> [Con] -> WriterT [Type] Q Dec)
+  -> (DatatypeInfo -> WriterT [Type] Q Dec)
   -> Dec
   -> Q [Dec]
-deriveForDec className _ f (InstanceD overlaps cxt classHead decs) = do
-  let (givenClassName, firstParam : _) = classHeadToParams classHead
+deriveForDec className f (InstanceD overlaps cxt instanceHead decs) = do
+  let (givenClassName, firstParam : _) = classHeadToParams instanceHead
   when (givenClassName /= className) $
     fail $ "while deriving " ++ show className ++ ": wrong class name in prototype declaration: " ++ show givenClassName
   let dataTypeName = headOfType firstParam
-  dataTypeInfo <- reify dataTypeName
-  case dataTypeInfo of
-    TyConI (DataD dataCxt name bndrs _ cons _) -> do
-      (dec, cxt') <- runWriterT $ f bndrs cons
-      return [InstanceD overlaps (cxt ++ cxt') classHead [dec]]
-    _ -> fail $ "while deriving " ++ show className ++ ": the name of an algebraic data type constructor is required"
-deriveForDec className makeClassHead f (DataD dataCxt name bndrs _ cons _) = do
-  (dec, cxt') <- runWriterT (f bndrs cons)
-  inst <- instanceD (pure (dataCxt ++ cxt')) (makeClassHead $ conT name) [pure dec]
-  return [inst]
-deriveForDec className makeClassHead f (DataInstD dataCxt name tyArgs _ cons _) = do
-  let bndrs = [PlainTV v | VarT v <- tail tyArgs ]
-  (dec, cxt') <- runWriterT (f bndrs cons)
-  inst <- instanceD (pure (dataCxt ++ cxt')) (makeClassHead $ foldl1 appT (map return $ (ConT name : init tyArgs))) [pure dec]
-  return [inst]
+  dataTypeInfo <- reifyDatatype dataTypeName
+  let instTypes = datatypeInstTypes dataTypeInfo
+      paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      instTypes' = case reverse instTypes of
+        [] -> fail "deriveGEq: Not enough type parameters"
+        (_:xs) -> reverse xs
+      generatedInstanceHead = AppT (ConT className) (foldl AppT (ConT $ datatypeName dataTypeInfo) instTypes')
+  unifiedTypes <- unifyTypes [generatedInstanceHead, instanceHead]
+  let
+    newInstanceHead = applySubstitution unifiedTypes instanceHead
+    newContext = applySubstitution unifiedTypes cxt
+  -- We are not using the generated context that we collect from f, instead
+  -- relying on a correct instance head from the user
+  (dec, _) <- runWriterT $ f dataTypeInfo
+  return [InstanceD overlaps newContext newInstanceHead [dec]]
+deriveForDec className f dataDec = do
+  dataTypeInfo <- normalizeDec dataDec
+  let instTypes = datatypeInstTypes dataTypeInfo
+      paramVars = Set.unions [freeTypeVariables t | t <- instTypes]
+      instTypes' = case reverse instTypes of
+        [] -> fail "deriveGEq: Not enough type parameters"
+        (_:xs) -> reverse xs
+      instanceHead = AppT (ConT className) (foldl AppT (ConT $ datatypeName dataTypeInfo) instTypes')
+  (dec, cxt') <- runWriterT (f dataTypeInfo)
+  return [InstanceD Nothing (datatypeContext dataTypeInfo ++ cxt') instanceHead [dec]]
 
 classHeadToParams :: Type -> (Name, [Type])
 classHeadToParams t = (h, reverse reversedParams)
@@ -116,5 +125,5 @@ classHeadToParams t = (h, reverse reversedParams)
 makeTopVars :: Name -> Q [Name]
 makeTopVars tyConName = do
   (tyVarBndrs, kArity) <- tyConArity' tyConName
-  extraVars <- replicateM kArity (newName "topvar")
+  extraVars <- replicateM kArity (newName "")
   return (map nameOfBinder tyVarBndrs ++ extraVars)
