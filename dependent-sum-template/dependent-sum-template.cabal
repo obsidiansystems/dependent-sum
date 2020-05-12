@@ -38,7 +38,6 @@ Library
                         containers,
                         mtl,
                         template-haskell,
-                        th-extras >= 0.0.0.5,
                         th-abstraction >= 0.3.1.0
 
 test-suite test
@@ -53,4 +52,3 @@ test-suite test
                , dependent-sum-template
                , template-haskell
                , th-abstraction
-               , th-extras

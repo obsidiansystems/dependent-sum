@@ -19,7 +19,6 @@ import Data.Maybe
 import Control.Monad
 import Control.Monad.Writer
 import Language.Haskell.TH
-import Language.Haskell.TH.Extras
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -50,7 +49,7 @@ reifyInstancesWithRigids rigids cls tys = reifyInstances cls (map (skolemize rig
 -- | Determine the type variables which occur freely in a type.
 freeTypeVariables :: Type -> Set Name
 freeTypeVariables t = case t of
-  ForallT bndrs _ t' -> Set.difference (freeTypeVariables t') (Set.fromList (map nameOfBinder bndrs))
+  ForallT bndrs _ t' -> Set.difference (freeTypeVariables t') (Set.fromList (map tvName bndrs))
   AppT t1 t2 -> Set.union (freeTypeVariables t1) (freeTypeVariables t2)
   SigT t _ -> freeTypeVariables t
   VarT n -> Set.singleton n
@@ -111,6 +110,16 @@ deriveForDec className f dataDec = do
   (dec, cxt') <- runWriterT (f dataTypeInfo)
   return [InstanceD Nothing (datatypeContext dataTypeInfo ++ cxt') instanceHead [dec]]
 
+headOfType :: Type -> Name
+headOfType = \case
+  ForallT _ _ ty -> headOfType ty
+  VarT name -> name
+  ConT name -> name
+  TupleT n -> tupleTypeName n
+  ArrowT -> ''(->)
+  ListT -> ''[]
+  AppT t _ -> headOfType t
+
 classHeadToParams :: Type -> (Name, [Type])
 classHeadToParams t = (h, reverse reversedParams)
   where
@@ -121,9 +130,10 @@ classHeadToParams t = (h, reverse reversedParams)
         let (h, reversedParams) = classHeadToParams f
         in (h, x : reversedParams)
       _ -> (headOfType t, [])
-
+{-
 makeTopVars :: Name -> Q [Name]
 makeTopVars tyConName = do
   (tyVarBndrs, kArity) <- tyConArity' tyConName
   extraVars <- replicateM kArity (newName "")
-  return (map nameOfBinder tyVarBndrs ++ extraVars)
+  return (map tvName tyVarBndrs ++ extraVars)
+-}

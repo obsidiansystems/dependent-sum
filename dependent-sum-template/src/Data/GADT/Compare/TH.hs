@@ -28,7 +28,6 @@ import qualified Data.Map.Merge.Lazy as Map
 import Data.Map (Map)
 import Language.Haskell.TH
 import Language.Haskell.TH.Datatype
-import Language.Haskell.TH.Extras
 
 -- A type class purely for overloading purposes
 class DeriveGEQ t where
