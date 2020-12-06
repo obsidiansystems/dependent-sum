@@ -25,37 +25,61 @@ import Data.Maybe (fromMaybe)
 
 import Text.Read
 
--- |A basic dependent sum type; the first component is a tag that specifies
--- the type of the second;  for example, think of a GADT such as:
+-- | A basic dependent sum type where the first component is a tag
+-- that specifies the type of the second. For example, think of a GADT
+-- such as:
 --
 -- > data Tag a where
 -- >    AString :: Tag String
 -- >    AnInt   :: Tag Int
+-- >    Rec     :: Tag (DSum Tag Identity)
 --
--- Then, we have the following valid expressions of type @Applicative f => DSum Tag f@:
+-- Then we can write expressions where the RHS of @(':=>')@ has
+-- different types depending on the @Tag@ constructor used. Here are
+-- some expressions of type @DSum Tag 'Identity'@:
+--
+-- > AString :=> Identity "hello!"
+-- > AnInt   :=> Identity 42
+--
+-- Often, the @f@ we choose has an 'Applicative' instance, and we can
+-- use the helper function @('==>')@. The following expressions all
+-- have the type @Applicative f => DSum Tag f@:
 --
 -- > AString ==> "hello!"
 -- > AnInt   ==> 42
 --
--- And we can write functions that consume @DSum Tag f@ values by matching,
--- such as:
+-- We can write functions that consume @DSum Tag f@ values by
+-- matching, such as:
 --
 -- > toString :: DSum Tag Identity -> String
 -- > toString (AString :=> Identity str) = str
 -- > toString (AnInt   :=> Identity int) = show int
+-- > toString (Rec     :=> Identity sum) = toString sum
 --
--- By analogy to the (key => value) construction for dictionary entries in
--- many dynamic languages, we use (key :=> value) as the constructor for
--- dependent sums.  The :=> and ==> operators have very low precedence and
--- bind to the right, so if the @Tag@ GADT is extended with an additional
--- constructor @Rec :: Tag (DSum Tag Identity)@, then @Rec ==> AnInt ==> 3 + 4@
--- is parsed as would be expected (@Rec ==> (AnInt ==> (3 + 4))@) and has type
--- @DSum Identity Tag@.  Its precedence is just above that of '$', so
--- @foo bar $ AString ==> "eep"@ is equivalent to @foo bar (AString ==> "eep")@.
+-- The @(':=>')@ constructor and @('==>')@ helper are chosen to
+-- resemble the @(key => value)@ construction for dictionary entries
+-- in many dynamic languages. The @:=>@ and @==>@ operators have very
+-- low precedence and bind to the right, making repeated use of these
+-- operators behave as you'd expect:
+--
+-- > -- Parses as: Rec ==> (AnInt ==> (3 + 4))
+-- > -- Has type: Applicative f => DSum Tag f
+-- > Rec ==> AnInt ==> 3 + 4
+--
+-- The precedence of these operators is just above that of '$', so
+-- @foo bar $ AString ==> "eep"@ is equivalent to @foo bar (AString
+-- ==> "eep")@.
+--
+-- To use the 'Eq', 'Ord', 'Read', and 'Show' instances for @'DSum'
+-- tag f@, you will need an 'ArgDict' instance for your tag type. Use
+-- 'Data.Constraint.Extras.TH.deriveArgDict' from the
+-- @constraints-extras@ package to generate this
+-- instance.
 data DSum tag f = forall a. !(tag a) :=> f a
 
 infixr 1 :=>, ==>
 
+-- | Convenience helper. Uses 'pure' to lift @a@ into @f a@.
 (==>) :: Applicative f => tag a -> a -> DSum tag f
 k ==> v = k :=> pure v
 
