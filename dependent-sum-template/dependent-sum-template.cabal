@@ -1,5 +1,5 @@
 name:                   dependent-sum-template
-version:                0.1.0.3
+version:                0.1.1.0
 stability:              experimental
 
 cabal-version:          >= 1.8

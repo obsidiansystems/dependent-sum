@@ -1,5 +1,9 @@
 # Revision history for dependent-sum-template
 
+## 0.1.1.0 - 2021-11-25
+
+* Support GHC 9.0
+
 ## 0.1.0.3 - 2020-03-24
 
 * Relax version bounds on `dependent-sum` to include 0.7.
