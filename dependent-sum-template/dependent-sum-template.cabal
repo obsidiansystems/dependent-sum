@@ -6,7 +6,7 @@ cabal-version:          >= 1.8
 build-type:             Simple
 
 author:                 James Cook <mokus@deepbondi.net>
-maintainer:             Ryan Trinkle <ryan.trinkle@obsidian.systems>
+maintainer:             Obsidian Systems, LLC <maintainer@obsidian.systems>
 license:                PublicDomain
 homepage:               https://github.com/obsidiansystems/dependent-sum
 
