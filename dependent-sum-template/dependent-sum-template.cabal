@@ -39,7 +39,7 @@ Library
                         dependent-sum >= 0.4.1 && < 0.8,
                         template-haskell,
                         th-extras >= 0.0.0.2,
-                        th-abstraction
+                        th-abstraction >= 0.4
 
 test-suite test
   if impl(ghc < 8.0)
