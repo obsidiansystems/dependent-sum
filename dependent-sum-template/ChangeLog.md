@@ -1,6 +1,6 @@
 # Revision history for dependent-sum-template
 
-## 0.1.1.1 - 2021-1-30
+## 0.1.1.1 - 2021-12-30
 
 * Fix warning with GHC 9.2 about non-canonical `return`.
 
