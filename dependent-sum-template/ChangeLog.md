@@ -1,5 +1,13 @@
 # Revision history for dependent-sum-template
 
+## 0.1.1.1 - 2021-1-30
+
+* Fix warning with GHC 9.2 about non-canonical `return`.
+
+## 0.1.1.0 revision 1 - 2021-11-30
+
+* Add bound to `th-abstraction` to prevent build failure.
+
 ## 0.1.1.0 - 2021-11-25
 
 * Support GHC 9.0
