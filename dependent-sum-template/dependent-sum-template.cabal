@@ -35,6 +35,7 @@ Library
   exposed-modules:      Data.GADT.Compare.TH
                         Data.GADT.Show.TH
   other-modules:        Data.Dependent.Sum.TH.Internal
+                        Data.GADT.Compare.Monad
   build-depends:        base >= 3 && <5,
                         dependent-sum >= 0.4.1 && < 0.8,
                         template-haskell,
