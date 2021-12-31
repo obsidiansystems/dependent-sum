@@ -14,7 +14,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -ddump-splices #-}
 import Control.Monad
-import Data.Dependent.Sum
 import Data.Functor.Identity
 import Data.Constraint.Extras.TH
 import Data.GADT.Compare

@@ -11,8 +11,8 @@ license:                PublicDomain
 homepage:               https://github.com/obsidiansystems/dependent-sum
 
 category:               Unclassified
-synopsis:               Template Haskell code to generate instances of classes in dependent-sum package
-description:            Template Haskell code to generate instances of classes in dependent-sum package, such as 'GEq' and 'GCompare'.
+synopsis:               Template Haskell code to generate instances of classes in some package
+description:            Template Haskell code to generate instances of classes in some package, such as 'GEq' and 'GCompare'.
 
 tested-with:            GHC == 8.0.2,
                         GHC == 8.2.2,
@@ -37,7 +37,7 @@ Library
   other-modules:        Data.Dependent.Sum.TH.Internal
                         Data.GADT.Compare.Monad
   build-depends:        base >= 3 && <5,
-                        dependent-sum >= 0.4.1 && < 0.8,
+                        some >= 1.0.1 && < 1.1,
                         containers >= 0.5.9.2,
                         mtl,
                         template-haskell,
@@ -52,7 +52,7 @@ test-suite test
   main-is: test.hs
   build-depends: base
                , constraints-extras
-               , dependent-sum
                , dependent-sum-template
                , template-haskell
+               , some
                , th-abstraction
