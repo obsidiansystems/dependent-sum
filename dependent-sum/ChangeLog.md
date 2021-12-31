@@ -1,6 +1,6 @@
 # Revision history for dependent-sum
 
-## Unreleased
+## 0.7.1.0 revision 2 - 2021-12-28
 
 * Allow `some` up until `1.0.4`
 
