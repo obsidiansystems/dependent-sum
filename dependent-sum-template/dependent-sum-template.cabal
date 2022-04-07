@@ -38,8 +38,9 @@ Library
                         Data.GADT.Compare.Monad
   build-depends:        base >= 3 && <5,
                         dependent-sum >= 0.4.1 && < 0.8,
+                        containers >= 0.5.9.2,
+                        mtl,
                         template-haskell,
-                        th-extras >= 0.0.0.2,
                         th-abstraction >= 0.4
 
 test-suite test
@@ -53,3 +54,5 @@ test-suite test
                , constraints-extras
                , dependent-sum
                , dependent-sum-template
+               , template-haskell
+               , th-abstraction
