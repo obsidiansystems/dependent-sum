@@ -209,3 +209,17 @@ do
         ]
 
 instance Show (Fnord a) where showsPrec = gshowsPrec
+
+
+data MyTest a :: * -> * where
+  MyTest_1 :: MyTest a ()
+  MyTest_2 :: MyTest a Int
+
+deriving instance Eq (MyTest a b)
+deriving instance Ord (MyTest a b)
+deriving instance Show (MyTest a b)
+
+deriveGShow ''MyTest
+deriveGEq ''MyTest
+deriveGCompare ''MyTest
+deriveArgDict ''MyTest

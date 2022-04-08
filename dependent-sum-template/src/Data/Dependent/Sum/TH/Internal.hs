@@ -10,18 +10,18 @@
 -- | Shared functions for dependent-sum-template
 module Data.Dependent.Sum.TH.Internal where
 
+import Control.Monad
+import Control.Monad.Writer
+import Data.List (foldl', drop)
+import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Data.Map.Merge.Lazy as Map
-import Language.Haskell.TH.Datatype
-
-import Data.Maybe
-import Control.Monad
-import Control.Monad.Writer
-import Language.Haskell.TH
-import Language.Haskell.TH.Datatype.TyVarBndr
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Language.Haskell.TH
+import Language.Haskell.TH.Datatype
+import Language.Haskell.TH.Datatype.TyVarBndr
 
 classHeadToParams :: Type -> (Name, [Type])
 classHeadToParams t = (h, reverse reversedParams)
