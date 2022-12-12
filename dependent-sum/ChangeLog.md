@@ -1,5 +1,9 @@
 # Revision history for dependent-sum
 
+## 0.7.1.1 - 2020-03-25
+
+* Support constraints-extras 0.4
+
 ## 0.7.1.0 - 2020-03-25
 
 * Shift version bounds for `some` to 1.0.1.* versions.
