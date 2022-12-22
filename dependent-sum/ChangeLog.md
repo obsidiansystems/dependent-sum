@@ -1,6 +1,6 @@
 # Revision history for dependent-sum
 
-## 0.7.1.2 - 2022-12-22
+## 0.7.2.0 - 2022-12-22
 
 * Update to some-1.0.4.*
 
