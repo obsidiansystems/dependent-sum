@@ -1,5 +1,5 @@
 name:                   dependent-sum
-version:                0.7.1.0
+version:                0.7.2.0
 stability:              provisional
 
 cabal-version:          1.22
@@ -46,10 +46,10 @@ Library
                         Data.Some
   other-extensions:     PatternSynonyms
   build-depends:        base >= 4.9 && <5
-                      , constraints-extras >= 0.2 && < 0.4
+                      , constraints-extras >= 0.2 && < 0.5
 
   -- tight bounds, so re-exported API is versioned properly.
-  build-depends:        some >= 1.0.1 && < 1.0.4
+  build-depends:        some >= 1.0.4 && < 1.0.5
 
   if impl(ghc >= 7.2)
     ghc-options:        -trust base
