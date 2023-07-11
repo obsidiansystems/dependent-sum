@@ -8,6 +8,14 @@
 
 * Support constraints-extras 0.4
 
+## 0.7.1.0 revision 2 - 2021-12-28
+
+* Allow `some` up until `1.0.4`
+
+## 0.7.1.0 revision 1 - 2021-03-24
+
+* Allow `some` up until `1.0.3`
+
 ## 0.7.1.0 - 2020-03-25
 
 * Shift version bounds for `some` to 1.0.1.* versions.
