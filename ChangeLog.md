@@ -1,5 +1,11 @@
 # Revision history for dependent-sum
 
+## 0.7.2.0 revision 1 - 2023-05-10
+
+Bump upper bound of `some` from `1.0.4` to `1.0.5`.
+
+There've been no changes to the parts of `some` re-exported from `dependent-sum` between `some-1.0.4` and `some-1.0.5`, so it is safe to do so.
+
 ## 0.7.2.0 - 2022-12-22
 
 * Update to some-1.0.4.*
