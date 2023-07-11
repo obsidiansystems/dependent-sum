@@ -24,11 +24,11 @@ description:            A dependent sum is a generalization of a
                         dependent sum types by using your own \"tag\"
                         types.
 
-tested-with:            GHC == 8.0.2,
-                        GHC == 8.2.2,
-                        GHC == 8.4.4,
-                        GHC == 8.6.5,
-                        GHC == 8.8.3
+tested-with:            GHC == 8.6.5,
+                        GHC == 8.8.4,
+                        GHC == 8.10.7,
+                        GHC == 9.0.1,
+                        GHC == 9.4.3
 
 extra-source-files:     ChangeLog.md
                       , examples/*.hs
