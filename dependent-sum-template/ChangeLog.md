@@ -6,6 +6,8 @@
   normalize their representation. This should allow the deriving functions to work on a much wider range
   of types.
 
+* Change dependency to just be on `some`, not `dependent-sum`, as we just need the reexported classes.
+
 ## 0.1.1.1 - 2021-12-30
 
 * Fix warning with GHC 9.2 about non-canonical `return`.
