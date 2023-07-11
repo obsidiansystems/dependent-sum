@@ -1,6 +1,6 @@
 # Revision history for dependent-sum-template
 
-## Pending release
+## 0.2.0.0 - 2023-07-11
 
 * Rework a lot of the logic using th-abstraction to get structural information about data types and to
   normalize their representation. This should allow the deriving functions to work on a much wider range
