@@ -1,5 +1,13 @@
 # Revision history for dependent-sum
 
+## 0.7.2.0 - 2022-12-22
+
+* Update to some-1.0.4.*
+
+## 0.7.1.1 - 2022-12-12
+
+* Support constraints-extras 0.4
+
 ## 0.7.1.0 revision 2 - 2021-12-28
 
 * Allow `some` up until `1.0.4`
