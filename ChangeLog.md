@@ -1,5 +1,11 @@
 # Revision history for dependent-sum
 
+## 0.7.2.0 revision 2 - 2023-11-20
+
+Bump upper bound of `some` from `1.0.5` to `1.0.6`.
+
+Same rationale as below.
+
 ## 0.7.2.0 revision 1 - 2023-05-10
 
 Bump upper bound of `some` from `1.0.4` to `1.0.5`.
